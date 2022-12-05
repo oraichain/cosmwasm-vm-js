@@ -1,6 +1,7 @@
 const webpack = require('webpack');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const { execSync } = require('child_process');
 
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
@@ -51,6 +52,13 @@ const webConfig = {
     },
   },
   plugins: [
+    {
+      apply: (compiler) => {
+        compiler.hooks.initialize.tap('WasmPlugin_build_web', () => {
+          execSync(`yarn build:wasm --target web`);
+        });
+      },
+    },
     ...commonConfig.plugins,
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
@@ -58,6 +66,13 @@ const webConfig = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
     }),
+    {
+      apply: (compiler) => {
+        compiler.hooks.done.tap('WasmPlugin_build_nodejs', () => {
+          execSync(`yarn build:wasm --target nodejs`);
+        });
+      },
+    },
     // new BundleAnalyzerPlugin(),
   ],
   optimization: {
