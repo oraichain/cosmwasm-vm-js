@@ -6,18 +6,6 @@ import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
 
-import('./wasm/zk/pkg').then(async (module) => {
-  if ('init' in module) {
-    // @ts-ignore
-    await module.init();
-  }
-  const { Poseidon, curve_hash, groth16_verify } = module;
-  const poseidon = new Poseidon();
-  global.poseidon_hash = poseidon.hash.bind(poseidon);
-  global.curve_hash = curve_hash;
-  global.groth16_verify = groth16_verify;
-});
-
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
 export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
@@ -31,6 +19,15 @@ export class VMInstance {
   public instance?: WebAssembly.Instance;
   public bech32: BechLib;
   public debugMsgs: string[] = [];
+
+  // override this
+  public static poseidon_hash: (inputs: Uint8Array[]) => Uint8Array;
+  public static curve_hash: (input: Uint8Array) => Uint8Array;
+  public static groth16_verify: (
+    input: Uint8Array,
+    proof: Uint8Array,
+    vk: Uint8Array
+  ) => boolean;
 
   constructor(
     public backend: IBackend,
@@ -526,7 +523,7 @@ export class VMInstance {
   }
 
   do_curve_hash(input: Region, destination: Region): Region {
-    let result = global.curve_hash(input.data);
+    let result = VMInstance.curve_hash(input.data);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
@@ -534,14 +531,18 @@ export class VMInstance {
 
   do_poseidon_hash(inputs: Region, destination: Region): Region {
     const inputsData = decodeSections(inputs.data);
-    let result = global.poseidon_hash(inputsData as Uint8Array[]);
+    let result = VMInstance.poseidon_hash(inputsData as Uint8Array[]);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
   }
 
   do_groth16_verify(input: Region, proof: Region, vk: Region): number {
-    const isValidProof = global.groth16_verify(input.data, proof.data, vk.data);
+    const isValidProof = VMInstance.groth16_verify(
+      input.data,
+      proof.data,
+      vk.data
+    );
 
     if (isValidProof) {
       return 0;

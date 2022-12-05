@@ -1,13 +1,20 @@
 import { readFileSync } from 'fs';
 import { fromAscii, fromBase64 } from '@cosmjs/encoding';
 import { Env, MessageInfo } from '../src/types';
-import { VMInstance } from '../src/instance';
+import { VMInstance } from '../src';
+
 import {
   BasicBackendApi,
   BasicKVIterStorage,
   BasicQuerier,
   IBackend,
 } from '../src/backend';
+
+import { Poseidon, curve_hash, groth16_verify } from '../wasm/zk-nodejs';
+const poseidon = new Poseidon();
+VMInstance.poseidon_hash = poseidon.hash.bind(poseidon);
+VMInstance.curve_hash = curve_hash;
+VMInstance.groth16_verify = groth16_verify;
 
 const wasmBytecode = readFileSync('testdata/v1.1/mixer.wasm');
 const backend: IBackend = {

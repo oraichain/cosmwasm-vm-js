@@ -3,7 +3,7 @@
   "version": "0.2.16",
   "license": "MIT",
   "author": "TerranOne",
-  "main": "dist/bundle.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "type": "commonjs",
   "files": [
@@ -14,7 +14,6 @@
   },
   "scripts": {
     "build": "tsc --module commonjs && webpack --mode production",
-    "build:wasm": "cd src/wasm/zk && wasm-pack build",
     "size": "size-limit",
     "test": "dts test",
     "lint": "dts lint",
