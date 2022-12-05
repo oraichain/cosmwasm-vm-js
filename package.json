@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "tsc --module commonjs && webpack --mode production",
+    "build:wasm": "cd src/wasm/zk && wasm-pack build",
     "size": "size-limit",
     "test": "dts test",
     "lint": "dts lint",

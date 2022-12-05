@@ -5,6 +5,7 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
+import * as zkwasm from './wasm/zk/pkg';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -14,6 +15,11 @@ export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;
 export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
 export const EDDSA_PUBKEY_LEN: number = 32;
+
+const poseidon = new zkwasm.Poseidon();
+global.poseidon_hash = poseidon.hash.bind(poseidon);
+global.curve_hash = zkwasm.curve_hash;
+global.groth16_verify = zkwasm.groth16_verify;
 
 export class VMInstance {
   public instance?: WebAssembly.Instance;
@@ -42,6 +48,9 @@ export class VMInstance {
         secp256k1_recover_pubkey: this.secp256k1_recover_pubkey.bind(this),
         ed25519_verify: this.ed25519_verify.bind(this),
         ed25519_batch_verify: this.ed25519_batch_verify.bind(this),
+        curve_hash: this.curve_hash.bind(this),
+        poseidon_hash: this.poseidon_hash.bind(this),
+        groth16_verify: this.groth16_verify.bind(this),
         debug: this.debug.bind(this),
         query_chain: this.query_chain.bind(this),
         abort: this.abort.bind(this),
@@ -218,6 +227,29 @@ export class VMInstance {
     let signatures = this.region(signatures_ptr);
     let public_keys = this.region(public_keys_ptr);
     return this.do_ed25519_batch_verify(messages, signatures, public_keys);
+  }
+
+  curve_hash(input_ptr: number, destination_ptr: number): number {
+    let input = this.region(input_ptr);
+    let destination = this.region(destination_ptr);
+    return this.do_curve_hash(input, destination).ptr;
+  }
+
+  poseidon_hash(inputs_ptr: number, destination_ptr: number): number {
+    let inputs = this.region(inputs_ptr);
+    let destination = this.region(destination_ptr);
+    return this.do_poseidon_hash(inputs, destination).ptr;
+  }
+
+  groth16_verify(
+    input_ptr: number,
+    public_ptr: number,
+    vk_ptr: number
+  ): number {
+    let input = this.region(input_ptr);
+    let proof = this.region(public_ptr);
+    let vk = this.region(vk_ptr);
+    return this.do_groth16_verify(input, proof, vk);
   }
 
   debug(message_ptr: number) {
@@ -485,6 +517,31 @@ export class VMInstance {
     }
 
     return 0;
+  }
+
+  do_curve_hash(input: Region, destination: Region): Region {
+    let result = global.curve_hash(input.data);
+    destination.write(result);
+
+    return new Region(this.exports.memory, 0);
+  }
+
+  do_poseidon_hash(inputs: Region, destination: Region): Region {
+    const inputsData = decodeSections(inputs.data);
+    let result = global.poseidon_hash(inputsData as Uint8Array[]);
+    destination.write(result);
+
+    return new Region(this.exports.memory, 0);
+  }
+
+  do_groth16_verify(input: Region, proof: Region, vk: Region): number {
+    const isValidProof = global.groth16_verify(input.data, proof.data, vk.data);
+
+    if (isValidProof) {
+      return 0;
+    } else {
+      return 1;
+    }
   }
 
   do_debug(message: Region) {
