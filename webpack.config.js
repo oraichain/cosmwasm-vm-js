@@ -31,6 +31,9 @@ const commonConfig = {
         /wordlists\/(french|spanish|italian|korean|chinese_simplified|chinese_traditional|japanese)\.json$/,
     }),
   ],
+  experiments: {
+    asyncWebAssembly: true,
+  },
 };
 
 const webConfig = {
@@ -52,13 +55,6 @@ const webConfig = {
     },
   },
   plugins: [
-    {
-      apply: (compiler) => {
-        compiler.hooks.initialize.tap('WasmPlugin_build_web', () => {
-          execSync(`yarn build:wasm --target web`);
-        });
-      },
-    },
     ...commonConfig.plugins,
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
@@ -66,14 +62,6 @@ const webConfig = {
     new webpack.ProvidePlugin({
       process: 'process/browser',
     }),
-    {
-      apply: (compiler) => {
-        compiler.hooks.done.tap('WasmPlugin_build_nodejs', () => {
-          execSync(`yarn build:wasm --target nodejs`);
-        });
-      },
-    },
-    // new BundleAnalyzerPlugin(),
   ],
   optimization: {
     minimize: true,
