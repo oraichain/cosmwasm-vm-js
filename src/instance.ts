@@ -5,7 +5,18 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
-import * as zkwasm from './wasm/zk/pkg';
+
+import('./wasm/zk/pkg').then(async (module) => {
+  if ('init' in module) {
+    // @ts-ignore
+    await module.init();
+  }
+  const { Poseidon, curve_hash, groth16_verify } = module;
+  const poseidon = new Poseidon();
+  global.poseidon_hash = poseidon.hash.bind(poseidon);
+  global.curve_hash = curve_hash;
+  global.groth16_verify = groth16_verify;
+});
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -15,11 +26,6 @@ export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;
 export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
 export const EDDSA_PUBKEY_LEN: number = 32;
-
-const poseidon = new zkwasm.Poseidon();
-global.poseidon_hash = poseidon.hash.bind(poseidon);
-global.curve_hash = zkwasm.curve_hash;
-global.groth16_verify = zkwasm.groth16_verify;
 
 export class VMInstance {
   public instance?: WebAssembly.Instance;

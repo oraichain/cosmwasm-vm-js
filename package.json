@@ -3,7 +3,7 @@
   "version": "0.2.16",
   "license": "MIT",
   "author": "TerranOne",
-  "main": "dist/index.js",
+  "main": "dist/bundle.js",
   "types": "dist/index.d.ts",
   "type": "commonjs",
   "files": [
@@ -47,8 +47,8 @@
   ],
   "peerDependencies": {
     "@babel/plugin-syntax-flow": "7.18.6",
-    "@babel/plugin-transform-react-jsx": "7.19.0",
-    "@babel/plugin-syntax-jsx": "7.18.6"
+    "@babel/plugin-syntax-jsx": "7.18.6",
+    "@babel/plugin-transform-react-jsx": "7.19.0"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.16.7",
@@ -60,7 +60,6 @@
     "majestic": "^1.8.1",
     "size-limit": "^7.0.8",
     "stream-browserify": "^3.0.0",
-    "terser-webpack-plugin": "^5.3.6",
     "ts-jest": "^27.1.4",
     "ts-loader": "^9.3.1",
     "tsconfig-paths-webpack-plugin": "^4.0.0",
