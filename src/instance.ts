@@ -5,7 +5,6 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
-import { arrayToNumber } from './utils/convert';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -241,11 +240,10 @@ export class VMInstance {
 
   curve_hash(
     input_ptr: number,
-    curve_ptr: number,
+    curve: number,
     destination_ptr: number
   ): number {
     let input = this.region(input_ptr);
-    let curve = this.region(curve_ptr);
     let destination = this.region(destination_ptr);
     return this.do_curve_hash(input, curve, destination).ptr;
   }
@@ -253,12 +251,11 @@ export class VMInstance {
   poseidon_hash(
     left_input_ptr: number,
     right_input_ptr: number,
-    curve_ptr: number,
+    curve: number,
     destination_ptr: number
   ): number {
     let left_input = this.region(left_input_ptr);
     let right_input = this.region(right_input_ptr);
-    let curve = this.region(curve_ptr);
     let destination = this.region(destination_ptr);
     return this.do_poseidon_hash(left_input, right_input, curve, destination)
       .ptr;
@@ -268,12 +265,11 @@ export class VMInstance {
     input_ptr: number,
     public_ptr: number,
     vk_ptr: number,
-    curve_ptr: number
+    curve: number
   ): number {
     let input = this.region(input_ptr);
     let proof = this.region(public_ptr);
     let vk = this.region(vk_ptr);
-    let curve = this.region(curve_ptr);
     return this.do_groth16_verify(input, proof, vk, curve);
   }
 
@@ -555,8 +551,8 @@ export class VMInstance {
     return 0;
   }
 
-  do_curve_hash(input: Region, curve: Region, destination: Region): Region {
-    let result = VMInstance.curve_hash(input.data, arrayToNumber(curve.data));
+  do_curve_hash(input: Region, curve: number, destination: Region): Region {
+    let result = VMInstance.curve_hash(input.data, curve);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
@@ -579,13 +575,13 @@ export class VMInstance {
   do_poseidon_hash(
     left_input: Region,
     right_input: Region,
-    curve: Region,
+    curve: number,
     destination: Region
   ): Region {
     let result = VMInstance.poseidon_hash(
       left_input.data,
       right_input.data,
-      arrayToNumber(curve.data)
+      curve
     );
     destination.write(result);
 
@@ -596,13 +592,13 @@ export class VMInstance {
     input: Region,
     proof: Region,
     vk: Region,
-    curve: Region
+    curve: number
   ): number {
     const isValidProof = VMInstance.groth16_verify(
       input.data,
       proof.data,
       vk.data,
-      arrayToNumber(curve.data)
+      curve
     );
 
     if (isValidProof) {

@@ -16,9 +16,7 @@ VMInstance.poseidon_hash = poseidon.hash.bind(poseidon);
 VMInstance.curve_hash = curve_hash;
 VMInstance.groth16_verify = groth16_verify;
 
-const wasmBytecode = readFileSync(
-  '/Users/phamtu/Projects/eueno-proof-of-replication/contract/artifacts/contract.wasm'
-);
+const wasmBytecode = readFileSync('testdata/v1.1/zk.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('orai'),
   storage: new BasicKVIterStorage(),
@@ -62,7 +60,6 @@ describe('CosmWasmVM', () => {
         vk_raw: VK,
       },
     });
-    console.log(executeRes.json);
 
     const queryRes = vm.query(mockEnv, {
       verify_proof_json: {
@@ -70,15 +67,6 @@ describe('CosmWasmVM', () => {
         public_inputs: PUBLIC_INPUTS,
       },
     });
-
-    console.log(
-      VMInstance.groth16_verify(
-        Buffer.from(PUBLIC_INPUTS, 'base64'),
-        Buffer.from(PROOF, 'base64'),
-        Buffer.from(VK, 'base64'),
-        1
-      )
-    );
 
     const data = (queryRes.json as { ok: string }).ok;
 
