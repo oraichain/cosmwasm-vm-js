@@ -1,5 +1,5 @@
 /*eslint-disable prefer-const */
-import { bech32, BechLib } from 'bech32';
+import bech32 from 'bech32';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
@@ -18,7 +18,6 @@ export const EDDSA_PUBKEY_LEN: number = 32;
 
 export class VMInstance {
   public instance?: WebAssembly.Instance;
-  public bech32: BechLib;
   public debugMsgs: string[] = [];
 
   // override this
@@ -40,9 +39,7 @@ export class VMInstance {
   constructor(
     public backend: IBackend,
     public readonly gasLimit?: number | undefined
-  ) {
-    this.bech32 = bech32;
-  }
+  ) {}
 
   public async build(wasmByteCode: ArrayBuffer) {
     let imports = {
@@ -411,17 +408,15 @@ export class VMInstance {
       throw new Error(`Address too large: ${source.str}`);
     }
 
-    const canonical = this.bech32.fromWords(
-      this.bech32.decode(source.str).words
-    );
+    const canonical = bech32.fromWords(bech32.decode(source.str).words);
 
     if (canonical.length === 0) {
       throw new Error('Invalid address.');
     }
 
-    const human = this.bech32.encode(
+    const human = bech32.encode(
       this.backend.backend_api.bech32_prefix,
-      this.bech32.toWords(canonical)
+      bech32.toWords(canonical)
     );
     if (human !== source.str) {
       throw new Error('Invalid address.');

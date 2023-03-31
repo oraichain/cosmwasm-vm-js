@@ -1,5 +1,5 @@
 import { fromBech32, normalizeBech32 } from '@cosmjs/encoding';
-import { bech32 } from 'bech32';
+import bech32 from 'bech32';
 
 export interface IGasInfo {
   cost: number;
