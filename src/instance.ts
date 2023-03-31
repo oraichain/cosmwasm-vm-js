@@ -21,13 +21,23 @@ export class VMInstance {
   public debugMsgs: string[] = [];
 
   // override this
-  public static poseidon_hash: (inputs: Uint8Array[]) => Uint8Array;
-  public static curve_hash: (input: Uint8Array) => Uint8Array;
+  public static poseidon_hash: (
+    left_input: Uint8Array,
+    right_input: Uint8Array,
+    curve: Uint8Array
+  ) => Uint8Array;
+  public static curve_hash: (
+    input: Uint8Array,
+    curve: Uint8Array
+  ) => Uint8Array;
   public static groth16_verify: (
     input: Uint8Array,
     proof: Uint8Array,
-    vk: Uint8Array
+    vk: Uint8Array,
+    curve: Uint8Array
   ) => boolean;
+  public static keccak_256: (input: Uint8Array) => Uint8Array;
+  public static sha256: (input: Uint8Array) => Uint8Array;
 
   constructor(
     public backend: IBackend,
@@ -54,6 +64,8 @@ export class VMInstance {
         curve_hash: this.curve_hash.bind(this),
         poseidon_hash: this.poseidon_hash.bind(this),
         groth16_verify: this.groth16_verify.bind(this),
+        keccak_256: this.keccak_256.bind(this),
+        sha256: this.sha256.bind(this),
         debug: this.debug.bind(this),
         query_chain: this.query_chain.bind(this),
         abort: this.abort.bind(this),
@@ -232,27 +244,54 @@ export class VMInstance {
     return this.do_ed25519_batch_verify(messages, signatures, public_keys);
   }
 
-  curve_hash(input_ptr: number, destination_ptr: number): number {
+  curve_hash(
+    input_ptr: number,
+    curve_ptr: number,
+    destination_ptr: number
+  ): number {
     let input = this.region(input_ptr);
+    let curve = this.region(curve_ptr);
     let destination = this.region(destination_ptr);
-    return this.do_curve_hash(input, destination).ptr;
+    return this.do_curve_hash(input, curve, destination).ptr;
   }
 
-  poseidon_hash(inputs_ptr: number, destination_ptr: number): number {
-    let inputs = this.region(inputs_ptr);
+  poseidon_hash(
+    left_input_ptr: number,
+    right_input_ptr: number,
+    curve_ptr: number,
+    destination_ptr: number
+  ): number {
+    let left_input = this.region(left_input_ptr);
+    let right_input = this.region(right_input_ptr);
+    let curve = this.region(curve_ptr);
     let destination = this.region(destination_ptr);
-    return this.do_poseidon_hash(inputs, destination).ptr;
+    return this.do_poseidon_hash(left_input, right_input, curve, destination)
+      .ptr;
   }
 
   groth16_verify(
     input_ptr: number,
     public_ptr: number,
-    vk_ptr: number
+    vk_ptr: number,
+    curve_ptr: number
   ): number {
     let input = this.region(input_ptr);
     let proof = this.region(public_ptr);
     let vk = this.region(vk_ptr);
-    return this.do_groth16_verify(input, proof, vk);
+    let curve = this.region(curve_ptr);
+    return this.do_groth16_verify(input, proof, vk, curve);
+  }
+
+  keccak_256(input_ptr: number, destination_ptr: number): number {
+    let input = this.region(input_ptr);
+    let destination = this.region(destination_ptr);
+    return this.do_keccak_256(input, destination).ptr;
+  }
+
+  sha256(input_ptr: number, destination_ptr: number): number {
+    let input = this.region(input_ptr);
+    let destination = this.region(destination_ptr);
+    return this.do_sha256(input, destination).ptr;
   }
 
   debug(message_ptr: number) {
@@ -522,26 +561,54 @@ export class VMInstance {
     return 0;
   }
 
-  do_curve_hash(input: Region, destination: Region): Region {
-    let result = VMInstance.curve_hash(input.data);
+  do_curve_hash(input: Region, curve: Region, destination: Region): Region {
+    let result = VMInstance.curve_hash(input.data, curve.data);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
   }
 
-  do_poseidon_hash(inputs: Region, destination: Region): Region {
-    const inputsData = decodeSections(inputs.data);
-    let result = VMInstance.poseidon_hash(inputsData as Uint8Array[]);
+  do_keccak_256(input: Region, destination: Region): Region {
+    let result = VMInstance.keccak_256(input.data);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
   }
 
-  do_groth16_verify(input: Region, proof: Region, vk: Region): number {
+  do_sha256(input: Region, destination: Region): Region {
+    let result = VMInstance.sha256(input.data);
+    destination.write(result);
+
+    return new Region(this.exports.memory, 0);
+  }
+
+  do_poseidon_hash(
+    left_input: Region,
+    right_input: Region,
+    curve: Region,
+    destination: Region
+  ): Region {
+    let result = VMInstance.poseidon_hash(
+      left_input.data,
+      right_input.data,
+      curve.data
+    );
+    destination.write(result);
+
+    return new Region(this.exports.memory, 0);
+  }
+
+  do_groth16_verify(
+    input: Region,
+    proof: Region,
+    vk: Region,
+    curve: Region
+  ): number {
     const isValidProof = VMInstance.groth16_verify(
       input.data,
       proof.data,
-      vk.data
+      vk.data,
+      curve.data
     );
 
     if (isValidProof) {
