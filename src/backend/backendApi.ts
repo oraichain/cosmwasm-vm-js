@@ -63,12 +63,6 @@ export class BasicBackendApi implements IBackendApi {
       throw new Error('human_address: Empty canonical address');
     }
 
-    if (canonical.length !== this.CANONICAL_LENGTH) {
-      throw new Error(
-        `human_address: canonical address length not correct: ${canonical.length}`
-      );
-    }
-
     // Remove excess padding, otherwise bech32.encode will throw "Exceeds length limit"
     // error when normalized is greater than 48 in length.
     const normalized =
