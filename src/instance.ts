@@ -5,7 +5,7 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
-import { arrayToNumber } from 'utils/convert';
+import { arrayToNumber } from './utils/convert';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
