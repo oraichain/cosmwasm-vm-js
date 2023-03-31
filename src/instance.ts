@@ -318,7 +318,6 @@ export class VMInstance {
     }
 
     if (value === null) {
-      console.warn(`db_read: key not found: ${key.str}`);
       return this.region(0);
     }
 
