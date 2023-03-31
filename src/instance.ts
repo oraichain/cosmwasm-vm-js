@@ -5,6 +5,7 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
+import { arrayToNumber } from 'utils/convert';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -24,17 +25,14 @@ export class VMInstance {
   public static poseidon_hash: (
     left_input: Uint8Array,
     right_input: Uint8Array,
-    curve: Uint8Array
+    curve: number
   ) => Uint8Array;
-  public static curve_hash: (
-    input: Uint8Array,
-    curve: Uint8Array
-  ) => Uint8Array;
+  public static curve_hash: (input: Uint8Array, curve: number) => Uint8Array;
   public static groth16_verify: (
     input: Uint8Array,
     proof: Uint8Array,
     vk: Uint8Array,
-    curve: Uint8Array
+    curve: number
   ) => boolean;
   public static keccak_256: (input: Uint8Array) => Uint8Array;
   public static sha256: (input: Uint8Array) => Uint8Array;
@@ -475,10 +473,12 @@ export class VMInstance {
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
     const msg = Buffer.from(message.data).toString('hex');
-    const _signature = global.eddsa().makeSignature(sig);
-    const _pubkey = global.eddsa().keyFromPublic(pub);
+    const _signature = globalThis.eddsa().makeSignature(sig);
+    const _pubkey = globalThis.eddsa().keyFromPublic(pub);
 
-    const isValidSignature = global.eddsa().verify(msg, _signature, _pubkey);
+    const isValidSignature = globalThis
+      .eddsa()
+      .verify(msg, _signature, _pubkey);
 
     if (isValidSignature) {
       return 0;
@@ -542,12 +542,12 @@ export class VMInstance {
       const signature = Buffer.from(signatures[i]).toString('hex');
       const publicKey = Buffer.from(publicKeys[i]).toString('hex');
 
-      const _signature = global.eddsa().makeSignature(signature);
-      const _publicKey = global.eddsa().keyFromPublic(publicKey);
+      const _signature = globalThis.eddsa().makeSignature(signature);
+      const _publicKey = globalThis.eddsa().keyFromPublic(publicKey);
 
       let isValid: boolean;
       try {
-        isValid = global.eddsa().verify(message, _signature, _publicKey);
+        isValid = globalThis.eddsa().verify(message, _signature, _publicKey);
       } catch (e) {
         console.log(e);
         return 1;
@@ -562,7 +562,7 @@ export class VMInstance {
   }
 
   do_curve_hash(input: Region, curve: Region, destination: Region): Region {
-    let result = VMInstance.curve_hash(input.data, curve.data);
+    let result = VMInstance.curve_hash(input.data, arrayToNumber(curve.data));
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
@@ -591,7 +591,7 @@ export class VMInstance {
     let result = VMInstance.poseidon_hash(
       left_input.data,
       right_input.data,
-      curve.data
+      arrayToNumber(curve.data)
     );
     destination.write(result);
 
@@ -608,7 +608,7 @@ export class VMInstance {
       input.data,
       proof.data,
       vk.data,
-      curve.data
+      arrayToNumber(curve.data)
     );
 
     if (isValidProof) {
