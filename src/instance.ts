@@ -1,5 +1,6 @@
 /*eslint-disable prefer-const */
 import bech32 from 'bech32';
+import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
@@ -20,6 +21,7 @@ export class VMInstance {
   public debugMsgs: string[] = [];
 
   // override this
+  public static eddsa: EllipticEddsa;
   public static poseidon_hash: (
     left_input: Uint8Array,
     right_input: Uint8Array,
@@ -463,12 +465,10 @@ export class VMInstance {
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
     const msg = Buffer.from(message.data).toString('hex');
-    const _signature = globalThis.eddsa().makeSignature(sig);
-    const _pubkey = globalThis.eddsa().keyFromPublic(pub);
+    const _signature = VMInstance.eddsa.makeSignature(sig);
+    const _pubkey = VMInstance.eddsa.keyFromPublic(pub);
 
-    const isValidSignature = globalThis
-      .eddsa()
-      .verify(msg, _signature, _pubkey);
+    const isValidSignature = VMInstance.eddsa.verify(msg, _signature, _pubkey);
 
     if (isValidSignature) {
       return 0;
@@ -532,12 +532,12 @@ export class VMInstance {
       const signature = Buffer.from(signatures[i]).toString('hex');
       const publicKey = Buffer.from(publicKeys[i]).toString('hex');
 
-      const _signature = globalThis.eddsa().makeSignature(signature);
-      const _publicKey = globalThis.eddsa().keyFromPublic(publicKey);
+      const _signature = VMInstance.eddsa.makeSignature(signature);
+      const _publicKey = VMInstance.eddsa.keyFromPublic(publicKey);
 
       let isValid: boolean;
       try {
-        isValid = globalThis.eddsa().verify(message, _signature, _publicKey);
+        isValid = VMInstance.eddsa.verify(message, _signature, _publicKey);
       } catch (e) {
         console.log(e);
         return 1;
