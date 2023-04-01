@@ -1,5 +1,6 @@
 import { eddsa } from 'elliptic';
 
+export * from './types';
 export * from './memory';
 export * from './backend';
 export * from './instance';
