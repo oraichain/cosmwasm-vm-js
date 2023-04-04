@@ -10,12 +10,16 @@ export abstract class QuerierBase implements IQuerier {
   query_raw(request: Uint8Array, gas_limit: number): Uint8Array {
     const queryRequest = parseQuery(request);
 
-    // TODO: make room for error
     // The Ok(Ok(x)) represents SystemResult<ContractResult<Binary>>
+    const result = this.handleQuery(queryRequest);
+    const contractResult =
+      result instanceof Error
+        ? { err: result.message }
+        : { ok: objectToBase64(result) };
 
-    return objectToUint8Array({ ok: { ok: objectToBase64(this.handleQuery(queryRequest)) }});
+    return objectToUint8Array({ ok: contractResult });
   }
-  
+
   /** Handle a specific JSON query message. */
   abstract handleQuery(queryRequest: any): any;
 }
@@ -23,10 +27,11 @@ export abstract class QuerierBase implements IQuerier {
 /** Basic implementation which does not actually implement `handleQuery`. Intended for testing. */
 export class BasicQuerier extends QuerierBase {
   handleQuery(queryRequest: any): any {
-    throw new Error(`Unimplemented - subclass BasicQuerier and provide handleQuery() implementation.`)
+    throw new Error(
+      `Unimplemented - subclass BasicQuerier and provide handleQuery() implementation.`
+    );
   }
 }
-
 
 function parseQuery(bytes: Uint8Array): any {
   const query = JSON.parse(new TextDecoder().decode(bytes));
