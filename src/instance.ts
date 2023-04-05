@@ -151,6 +151,49 @@ export class VMInstance {
     return this.region(result);
   }
 
+  // IBC implementation
+  public ibc_channel_open(env: Env, msg: object): Region {
+    let { ibc_channel_open } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = ibc_channel_open(...args);
+    return this.region(result);
+  }
+
+  public ibc_channel_connect(env: Env, msg: object): Region {
+    let { ibc_channel_connect } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = ibc_channel_connect(...args);
+    return this.region(result);
+  }
+
+  public ibc_channel_close(env: Env, msg: object): Region {
+    let { ibc_channel_close } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = ibc_channel_close(...args);
+    return this.region(result);
+  }
+
+  public ibc_packet_receive(env: Env, msg: object): Region {
+    let { ibc_packet_receive } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = ibc_packet_receive(...args);
+    return this.region(result);
+  }
+
+  public ibc_packet_ack(env: Env, msg: object): Region {
+    let { ibc_packet_ack } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = ibc_packet_ack(...args);
+    return this.region(result);
+  }
+
+  public ibc_packet_timeout(env: Env, msg: object): Region {
+    let { ibc_packet_timeout } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let result = ibc_packet_timeout(...args);
+    return this.region(result);
+  }
+
   db_read(key_ptr: number): number {
     let key = this.region(key_ptr);
     return this.do_db_read(key).ptr;
