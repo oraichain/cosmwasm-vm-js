@@ -30,20 +30,6 @@ export class VMInstance {
 
   // override this
   public static eddsa: EllipticEddsa;
-  public static poseidon_hash: (
-    left_input: Uint8Array,
-    right_input: Uint8Array,
-    curve: number
-  ) => Uint8Array;
-  public static curve_hash: (input: Uint8Array, curve: number) => Uint8Array;
-  public static groth16_verify: (
-    input: Uint8Array,
-    proof: Uint8Array,
-    vk: Uint8Array,
-    curve: number
-  ) => boolean;
-  public static keccak_256: (input: Uint8Array) => Uint8Array;
-  public static sha256: (input: Uint8Array) => Uint8Array;
 
   constructor(
     public backend: IBackend,
@@ -647,21 +633,21 @@ export class VMInstance {
   }
 
   do_curve_hash(input: Region, curve: number, destination: Region): Region {
-    let result = VMInstance.curve_hash(input.data, curve);
+    let result = this.backend.backend_api.curve_hash(input.data, curve);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
   }
 
   do_keccak_256(input: Region, destination: Region): Region {
-    let result = VMInstance.keccak_256(input.data);
+    let result = this.backend.backend_api.keccak_256(input.data);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
   }
 
   do_sha256(input: Region, destination: Region): Region {
-    let result = VMInstance.sha256(input.data);
+    let result = this.backend.backend_api.sha256(input.data);
     destination.write(result);
 
     return new Region(this.exports.memory, 0);
@@ -673,7 +659,7 @@ export class VMInstance {
     curve: number,
     destination: Region
   ): Region {
-    let result = VMInstance.poseidon_hash(
+    let result = this.backend.backend_api.poseidon_hash(
       left_input.data,
       right_input.data,
       curve
@@ -689,7 +675,7 @@ export class VMInstance {
     vk: Region,
     curve: number
   ): number {
-    const isValidProof = VMInstance.groth16_verify(
+    const isValidProof = this.backend.backend_api.groth16_verify(
       input.data,
       proof.data,
       vk.data,

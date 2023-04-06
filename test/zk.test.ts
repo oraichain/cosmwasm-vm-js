@@ -12,13 +12,31 @@ import {
 
 import { Poseidon, curve_hash, groth16_verify } from 'cosmwasm-vm-js-zk/nodejs';
 const poseidon = new Poseidon();
-VMInstance.poseidon_hash = poseidon.hash.bind(poseidon);
-VMInstance.curve_hash = curve_hash;
-VMInstance.groth16_verify = groth16_verify;
+
+class ZkBackendApi extends BasicBackendApi {
+  poseidon_hash(
+    left_input: Uint8Array,
+    right_input: Uint8Array,
+    curve: number
+  ): Uint8Array {
+    return poseidon.hash(left_input, right_input, curve);
+  }
+  curve_hash(input: Uint8Array, curve: number): Uint8Array {
+    return curve_hash(input, curve);
+  }
+  groth16_verify(
+    input: Uint8Array,
+    proof: Uint8Array,
+    vk: Uint8Array,
+    curve: number
+  ): boolean {
+    return groth16_verify(input, proof, vk, curve);
+  }
+}
 
 const wasmBytecode = readFileSync('testdata/v1.1/zk.wasm');
 const backend: IBackend = {
-  backend_api: new BasicBackendApi('orai'),
+  backend_api: new ZkBackendApi('orai'),
   storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };

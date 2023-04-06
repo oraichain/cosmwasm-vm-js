@@ -32,6 +32,20 @@ export interface IBackendApi {
   bech32_prefix: string;
   canonical_address(human: string): Uint8Array;
   human_address(canonical: Uint8Array): string;
+  poseidon_hash(
+    left_input: Uint8Array,
+    right_input: Uint8Array,
+    curve: number
+  ): Uint8Array;
+  curve_hash(input: Uint8Array, curve: number): Uint8Array;
+  groth16_verify(
+    input: Uint8Array,
+    proof: Uint8Array,
+    vk: Uint8Array,
+    curve: number
+  ): boolean;
+  keccak_256(input: Uint8Array): Uint8Array;
+  sha256(input: Uint8Array): Uint8Array;
 }
 
 export class BasicBackendApi implements IBackendApi {
@@ -39,6 +53,31 @@ export class BasicBackendApi implements IBackendApi {
   public CANONICAL_LENGTH = 54;
   public EXCESS_PADDING = 6;
   constructor(public bech32_prefix: string = 'terra') {}
+
+  poseidon_hash(
+    left_input: Uint8Array,
+    right_input: Uint8Array,
+    curve: number
+  ): Uint8Array {
+    throw new Error('Method not implemented.');
+  }
+  curve_hash(input: Uint8Array, curve: number): Uint8Array {
+    throw new Error('Method not implemented.');
+  }
+  groth16_verify(
+    input: Uint8Array,
+    proof: Uint8Array,
+    vk: Uint8Array,
+    curve: number
+  ): boolean {
+    throw new Error('Method not implemented.');
+  }
+  keccak_256(input: Uint8Array): Uint8Array {
+    throw new Error('Method not implemented.');
+  }
+  sha256(input: Uint8Array): Uint8Array {
+    throw new Error('Method not implemented.');
+  }
 
   public canonical_address(human: string): Uint8Array {
     if (human.length === 0) {
