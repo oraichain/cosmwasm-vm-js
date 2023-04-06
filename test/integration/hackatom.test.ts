@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { VMInstance } from "../../src/instance";
+import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
   BasicKVIterStorage,
@@ -12,14 +12,18 @@ import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 type HackatomQueryRequest = {
   bank: {
     all_balances: {
-      address: string
-    }
-  }
-}
+      address: string;
+    };
+  };
+};
 class HackatomMockQuerier extends BasicQuerier {
-  private balances: Map<string, { amount: string, denom: string }[]> = new Map();
+  private balances: Map<string, { amount: string; denom: string }[]> =
+    new Map();
 
-  update_balance(addr: string, balance: { amount: string; denom: string; }[]): { amount: string; denom: string; }[] {
+  update_balance(
+    addr: string,
+    balance: { amount: string; denom: string }[]
+  ): { amount: string; denom: string }[] {
     this.balances.set(addr, balance);
     return balance;
   }
@@ -28,7 +32,7 @@ class HackatomMockQuerier extends BasicQuerier {
     if ('bank' in queryRequest) {
       if ('all_balances' in queryRequest.bank) {
         const { address } = queryRequest.bank.all_balances;
-        return { amount: this.balances.get(address) || [] }
+        return { amount: this.balances.get(address) || [] };
       }
     }
 
@@ -49,13 +53,14 @@ const mockEnv = {
     time: '1571797419879305533',
     chain_id: 'cosmos-testnet-14002',
   },
-  contract: { address: mockContractAddr }
+  contract: { address: mockContractAddr },
 };
 
-const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } = {
-  sender: creator,
-  funds: []
-};
+const mockInfo: { sender: string; funds: { amount: string; denom: string }[] } =
+  {
+    sender: creator,
+    funds: [],
+  };
 
 let vm: VMInstance;
 describe('hackatom', () => {
@@ -66,22 +71,22 @@ describe('hackatom', () => {
     vm = new VMInstance({
       backend_api: new BasicBackendApi('terra'),
       storage: new BasicKVIterStorage(),
-      querier
+      querier,
     });
     await vm.build(wasmBytecode);
   });
 
-
   it('proper_initialization', async () => {
     // Act
-    const instantiateResponse = vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
+    const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {
+      verifier,
+      beneficiary,
+    });
 
     // Assert
-    expect(instantiateResponse.json).toEqual({
+    expect(instantiateResponse).toEqual({
       ok: {
-        attributes: [
-          { key: 'Let the', value: 'hacking begin' },
-        ],
+        attributes: [{ key: 'Let the', value: 'hacking begin' }],
         data: null,
         events: [],
         messages: [],
@@ -107,12 +112,14 @@ describe('hackatom', () => {
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
-    const newVerifier = 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn'
+    const newVerifier = 'terra1h8ljdmae7lx05kjj79c9ekscwsyjd3yr8wyvdn';
     let response = vm.migrate(mockEnv, { verifier: newVerifier });
 
     // Assert
     expectResponseToBeOk(response);
-    expect((response.json as { ok: { messages: any[] }}).ok.messages.length).toBe(0);
+    expect((response as { ok: { messages: any[] } }).ok.messages.length).toBe(
+      0
+    );
     expectVerifierToBe(newVerifier);
   });
 
@@ -127,8 +134,12 @@ describe('hackatom', () => {
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
-    const queryResponse = vm.query(mockEnv, { other_balance: { address: richAddress } });
-    const queryResponseWrongAddress = vm.query(mockEnv, { other_balance: { address: 'other address' } });
+    const queryResponse = vm.query(mockEnv, {
+      other_balance: { address: richAddress },
+    });
+    const queryResponseWrongAddress = vm.query(mockEnv, {
+      other_balance: { address: 'other address' },
+    });
 
     // Assert
     expectResponseToBeOk(queryResponse);
@@ -143,51 +154,70 @@ describe('hackatom', () => {
     const response = vm.instantiate(
       mockEnv,
       { funds: [{ amount: '1000', denom: 'earth' }] } as any, // invalid info message, missing sender field
-      { verifier, beneficiary });
+      { verifier, beneficiary }
+    );
 
     // Assert
-    expect((response.json as { error: string }).error.indexOf('Error parsing')).toBe(0);
+    expect((response as { error: string }).error.indexOf('Error parsing')).toBe(
+      0
+    );
   });
 
   it('execute_release_works', async () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-    querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
+    querier.update_balance(mockContractAddr, [
+      { amount: '1000', denom: 'earth' },
+    ]);
 
     // Act
     const execResponse = vm.execute(
       mockEnv,
       { sender: verifier, funds: [] },
-      { release: {} });
+      { release: {} }
+    );
 
     // Assert
     expectResponseToBeOk(execResponse);
 
-    expect((execResponse.json as any).ok.messages.length).toBe(1);
-    expect((execResponse.json as any).ok.messages[0].msg.bank.send.to_address).toBe(beneficiary);
-    expect((execResponse.json as any).ok.messages[0].msg.bank.send.amount).toStrictEqual([{ amount: '1000', denom: 'earth' }]);
+    expect((execResponse as any).ok.messages.length).toBe(1);
+    expect((execResponse as any).ok.messages[0].msg.bank.send.to_address).toBe(
+      beneficiary
+    );
+    expect(
+      (execResponse as any).ok.messages[0].msg.bank.send.amount
+    ).toStrictEqual([{ amount: '1000', denom: 'earth' }]);
 
-    expect((execResponse.json as any).ok.attributes[0]).toStrictEqual({key: 'action', value: 'release'});
-    expect((execResponse.json as any).ok.attributes[1]).toStrictEqual({key: 'destination', value: beneficiary});
+    expect((execResponse as any).ok.attributes[0]).toStrictEqual({
+      key: 'action',
+      value: 'release',
+    });
+    expect((execResponse as any).ok.attributes[1]).toStrictEqual({
+      key: 'destination',
+      value: beneficiary,
+    });
 
-    expect(fromBase64((execResponse.json as any).ok.data)[0]).toBe(240); // 0xF0
-    expect(fromBase64((execResponse.json as any).ok.data)[1]).toBe(11);  // 0x0B
-    expect(fromBase64((execResponse.json as any).ok.data)[2]).toBe(170); // 0xAA
+    expect(fromBase64((execResponse as any).ok.data)[0]).toBe(240); // 0xF0
+    expect(fromBase64((execResponse as any).ok.data)[1]).toBe(11); // 0x0B
+    expect(fromBase64((execResponse as any).ok.data)[2]).toBe(170); // 0xAA
   });
 
   it('execute_release_fails_for_wrong_sender', async () => {
     // Arrange
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
-    querier.update_balance(mockContractAddr, [{ amount: '1000', denom: 'earth' }]);
+    querier.update_balance(mockContractAddr, [
+      { amount: '1000', denom: 'earth' },
+    ]);
 
     // Act
     const execResponse = vm.execute(
       mockEnv,
       { sender: beneficiary, funds: [] },
-      { release: {} });
+      { release: {} }
+    );
 
     // Assert
-    expect((execResponse.json as any).error).toBe('Unauthorized');
+    expect((execResponse as any).error).toBe('Unauthorized');
   });
 
   it('execute_panic', async () => {
@@ -203,7 +233,9 @@ describe('hackatom', () => {
     vm.instantiate(mockEnv, mockInfo, { verifier, beneficiary });
 
     // Act
-    expect(() => vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} })).toThrow();
+    expect(() =>
+      vm.execute(mockEnv, mockInfo, { user_errors_in_api_calls: {} })
+    ).toThrow();
   });
 });
 
@@ -215,10 +247,12 @@ function expectVerifierToBe(addr: string) {
   expect(verifier).toEqual({ verifier: addr });
 }
 
-function parseBase64OkResponse(region: Region): any {
-  const data = (region.json as { ok: string }).ok;
+function parseBase64OkResponse(json: object): any {
+  const data = (json as { ok: string }).ok;
   if (!data) {
-    throw new Error(`Response indicates an error state: ${JSON.stringify(region.json)}`)
+    throw new Error(
+      `Response indicates an error state: ${JSON.stringify(json)}`
+    );
   }
 
   return parseBase64Response(data);

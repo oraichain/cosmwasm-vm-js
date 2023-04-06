@@ -32,7 +32,11 @@ export enum Order {
 export interface IIterStorage extends IStorage {
   all(iterator_id: Uint8Array): Array<Record>;
 
-  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): Uint8Array;
+  scan(
+    start: Uint8Array | null,
+    end: Uint8Array | null,
+    order: Order
+  ): Uint8Array;
   next(iterator_id: Uint8Array): Record | null;
 }
 
@@ -72,7 +76,10 @@ export class BasicKVStorage implements IStorage {
 }
 
 export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
-  constructor(public dict: Immutable.Map<string, string> = Immutable.Map(), public iterators: Map<number, Iter> = new Map()) {
+  constructor(
+    public dict: Immutable.Map<string, string> = Immutable.Map(),
+    public iterators: Map<number, Iter> = new Map()
+  ) {
     super(dict);
   }
 
@@ -109,10 +116,19 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     return record;
   }
 
-  scan(start: Uint8Array | null, end: Uint8Array | null, order: Order): Uint8Array {
+  scan(
+    start: Uint8Array | null,
+    end: Uint8Array | null,
+    order: Order
+  ): Uint8Array {
     if (!(order in Order)) {
       throw new Error(`Invalid order value ${order}.`);
     }
+
+    // if there is end namespace
+    const filterKeyLength = end?.length
+      ? Buffer.from(end.slice(0, 2)).readUint16BE()
+      : 0;
 
     const newId = this.iterators.size + 1;
 
@@ -124,10 +140,19 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
 
     let data: Record[] = [];
     for (const key of Array.from(this.dict.keys()).sort()) {
-      if (start?.length && compare(start, fromBase64(key)) === 1) continue;
-      if (end?.length && compare(fromBase64(key), end) > -1) break;
+      let keyArr = fromBase64(key);
+      if (start?.length && compare(start, keyArr) === 1) continue;
 
-      data.push({ key: fromBase64(key), value: this.get(fromBase64(key))! });
+      if (filterKeyLength) {
+        // first 2 bytes are length of namespace
+        const keyLength = Buffer.from(keyArr.slice(0, 2)).readUint16BE();
+        // different namespace
+        if (filterKeyLength !== keyLength) continue;
+        // end of search
+        if (compare(keyArr, end!) > -1) break;
+      }
+
+      data.push({ key: keyArr, value: this.get(keyArr)! });
     }
 
     if (order === Order.Descending) {

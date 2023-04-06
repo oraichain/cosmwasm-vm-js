@@ -31,7 +31,7 @@ describe('CosmWasmVM', () => {
     await vm.build(wasmByteCode);
 
     let region = vm.instantiate(mockEnv, mockInfo, { reflect_code_id: 101 });
-    expect('ok' in region.json).toBeTruthy();
+    expect('ok' in region).toBeTruthy();
 
     region = vm.ibc_channel_open(mockEnv, {
       open_init: {
@@ -51,6 +51,6 @@ describe('CosmWasmVM', () => {
       },
     });
 
-    expect('ok' in region.json).toBeTruthy();
+    expect('ok' in region).toBeTruthy();
   });
 });

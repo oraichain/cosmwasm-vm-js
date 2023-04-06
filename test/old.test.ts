@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { fromAscii, fromBase64 } from '@cosmjs/encoding';
+import { fromAscii, fromBase64, toAscii } from '@cosmjs/encoding';
 import { Env, MessageInfo } from '../src/types';
 import { VMInstance } from '../src';
 
@@ -8,6 +8,7 @@ import {
   BasicKVIterStorage,
   BasicQuerier,
   IBackend,
+  Order,
 } from '../src/backend';
 
 const mockEnv: Env = {
@@ -32,7 +33,11 @@ async function testVersion(version = '0.13') {
     storage: new BasicKVIterStorage(),
     querier: new BasicQuerier(),
   });
-  await vm.build(readFileSync(`testdata/v${version}/oraichain_nft.wasm`));
+  await vm.build(
+    readFileSync(
+      `/Users/phamtu/Projects/oraiwasm/package/plus/oraichain_nft/artifacts/oraichain_nft.wasm`
+    )
+  );
   const instantiateRes = vm.instantiate(mockEnv, mockInfo, {
     name: 'name',
     version: 'version',
@@ -42,37 +47,86 @@ async function testVersion(version = '0.13') {
 
   expect('ok' in instantiateRes).toBeTruthy();
 
-  let executeRes = vm.execute(mockEnv, mockInfo, {
+  vm.execute(mockEnv, mockInfo, {
     mint: {
-      token_id: 'token_id',
+      token_id: 'token_id1',
       owner: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
-      name: 'name',
-      description: 'description',
-      image: 'image',
+      name: 'name1',
+      description: 'description1',
+      image: 'image1',
     },
   });
 
-  console.log(executeRes);
-
-  executeRes = vm.execute(mockEnv, mockInfo, {
-    send_nft: {
-      contract: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
-      token_id: 'token_id',
+  vm.execute(mockEnv, mockInfo, {
+    mint: {
+      token_id: 'token_id2',
+      owner: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
+      name: 'name2',
+      description: 'description2',
+      image: 'image2',
     },
   });
 
-  console.log(executeRes);
+  let iterId = vm.backend.storage.scan(
+    Buffer.from('\x00\x06tokens'),
+    Buffer.from('\x00\x06tokent'),
+    Order.Ascending
+  );
 
-  const queryRes = vm.query(mockEnv, {
-    all_tokens: {},
-  });
+  let cnt = vm.backend.storage.all(iterId);
+  console.log(
+    cnt.map((a) => [Buffer.from(a.key.slice(2)).toString(), fromAscii(a.value)])
+  );
 
-  const data = (queryRes as { ok: string }).ok;
+  //   const queryRes = vm.query(mockEnv, {
+  //     all_tokens: {},
+  //   });
 
-  console.log(JSON.parse(fromAscii(fromBase64(data))));
+  //   console.log(queryRes);
 }
 
 describe('Old CosmWasmVM', () => {
+  it('test storage', () => {
+    const vm = new VMInstance({
+      backend_api: new BasicBackendApi('orai'),
+      storage: new BasicKVIterStorage(),
+      querier: new BasicQuerier(),
+    });
+    // Arrange
+    // TODO: VM instance w/ coin data & Bank module
+    // const vm = new VMInstance(backend, [{ denom: 'gold', amount: '123456' }]);
+    const storage = vm.backend.storage;
+
+    storage.set(
+      toAscii('tokens__ownerorai1ur2vsjrjarygawpdwtqteaazfchvw4fg6uql76'),
+      toAscii(`1`)
+    );
+    storage.set(
+      toAscii('tokens__ownerorai14n3tx8s5ftzhlxvq0w5962v60vd82h30rha573'),
+      toAscii(`1`)
+    );
+    storage.set(
+      toAscii('tokenstoken_id1'),
+      toAscii(
+        `{"token_id": "token_id1", "owner": "owner1", "name": "name1", "description": "description1", "image": "image1"}`
+      )
+    );
+    storage.set(
+      toAscii('tokenstoken_id2'),
+      toAscii(
+        `{"token_id": "token_id2", "owner": "owner2", "name": "name2", "description": "description2", "image": "image2"}`
+      )
+    );
+
+    let iterId = storage.scan(
+      toAscii('tokens'),
+      toAscii('tokent'),
+      Order.Ascending
+    );
+    let cnt = storage.all(iterId);
+    console.log(cnt.map((a) => fromAscii(a.value)));
+  });
+
   it('version 0.13', async () => {
     await testVersion('0.13');
   });

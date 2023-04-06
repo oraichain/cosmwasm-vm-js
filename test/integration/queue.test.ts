@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { VMInstance } from "../../src/instance";
+import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
   BasicKVIterStorage,
@@ -20,13 +20,14 @@ const mockEnv = {
     time: '1571797419879305533',
     chain_id: 'cosmos-testnet-14002',
   },
-  contract: { address: mockContractAddr }
+  contract: { address: mockContractAddr },
 };
 
-const mockInfo: { sender: string, funds: { amount: string, denom: string }[] } = {
-  sender: creator,
-  funds: []
-};
+const mockInfo: { sender: string; funds: { amount: string; denom: string }[] } =
+  {
+    sender: creator,
+    funds: [],
+  };
 
 let vm: VMInstance;
 describe('queue', () => {
@@ -37,7 +38,7 @@ describe('queue', () => {
       querier: new BasicQuerier(),
     };
 
-    vm = new VMInstance(backend, 100_000_000_000_000) // TODO: implement gas limit on VM
+    vm = new VMInstance(backend, 100_000_000_000_000); // TODO: implement gas limit on VM
     await vm.build(wasmBytecode);
   });
 
@@ -50,7 +51,7 @@ describe('queue', () => {
     const sumResponse = vm.query(mockEnv, { sum: {} });
 
     // Assert
-    expect((instantiateResponse.json as any).ok.messages.length).toBe(0);
+    expect((instantiateResponse as any).ok.messages.length).toBe(0);
 
     expectResponseToBeOk(countResponse);
     expect(parseBase64OkResponse(countResponse)).toEqual({ count: 0 });
@@ -101,7 +102,9 @@ describe('queue', () => {
     const dequeueResponse = vm.execute(mockEnv, mockInfo, { dequeue: {} });
 
     // Assert
-    expect(parseBase64Response((dequeueResponse.json as any).ok.data)).toEqual({ value: 25 });
+    expect(parseBase64Response((dequeueResponse as any).ok.data)).toEqual({
+      value: 25,
+    });
 
     const countResponse = vm.query(mockEnv, { count: {} });
     expect(parseBase64OkResponse(countResponse)).toEqual({ count: 1 });
@@ -122,7 +125,12 @@ describe('queue', () => {
     const reducerResponse = vm.query(mockEnv, { reducer: {} });
 
     // Assert
-    expect(parseBase64OkResponse(reducerResponse).counters).toStrictEqual([[40, 85], [15, 125], [85, 0], [-10, 140]]);
+    expect(parseBase64OkResponse(reducerResponse).counters).toStrictEqual([
+      [40, 85],
+      [15, 125],
+      [85, 0],
+      [-10, 140],
+    ]);
   });
 
   it('migrate_works', () => {
@@ -135,7 +143,7 @@ describe('queue', () => {
     const migrateResponse = vm.migrate(mockEnv, {});
 
     // Assert
-    expect((migrateResponse.json as any).ok.messages.length).toEqual(0);
+    expect((migrateResponse as any).ok.messages.length).toEqual(0);
 
     const countResponse = vm.query(mockEnv, { count: {} });
     expect(parseBase64OkResponse(countResponse)).toEqual({ count: 3 });
@@ -187,10 +195,12 @@ describe('queue', () => {
 
 // Helpers
 
-function parseBase64OkResponse(region: Region): any {
-  const data = (region.json as { ok: string }).ok;
+function parseBase64OkResponse(json: object): any {
+  const data = (json as { ok: string }).ok;
   if (!data) {
-    throw new Error(`Response indicates an error state: ${JSON.stringify(region.json)}`)
+    throw new Error(
+      `Response indicates an error state: ${JSON.stringify(json)}`
+    );
   }
 
   return parseBase64Response(data);

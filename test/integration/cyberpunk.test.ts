@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { VMInstance } from "../../src/instance";
+import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
   BasicKVIterStorage,
@@ -30,7 +30,7 @@ const mockEnv: Env = {
 
 const mockInfo: MessageInfo = {
   sender: creator,
-  funds: []
+  funds: [],
 };
 
 let vm: VMInstance;
@@ -41,23 +41,20 @@ describe('cyberpunk', () => {
   });
 
   // port of https://github.com/CosmWasm/cosmwasm/blob/f6a0485088f1084379a5655bcc2956526290c09f/contracts/cyberpunk/tests/integration.rs#L30
-  it.skip('execute_argon2', async () => { // gas limit not implemented
+  it.skip('execute_argon2', async () => {
+    // gas limit not implemented
     // Arrange
     vm = new VMInstance(backend, 100_000_000_000_000); // TODO: implement gas limit on VM
-    const initRes = vm.instantiate(mockEnv, mockInfo, {}).json as any;
+    const initRes = vm.instantiate(mockEnv, mockInfo, {}) as any;
     expect(initRes.messages.length).toStrictEqual(0);
 
     const gasBefore = vm.remainingGas;
 
     // Act
-    const executeRes = vm.execute(
-      mockEnv,
-      mockInfo,
-      {
-        mem_cost: 256,
-        time_cost: 5,
-      }
-    ).json;
+    const executeRes = vm.execute(mockEnv, mockInfo, {
+      mem_cost: 256,
+      time_cost: 5,
+    });
 
     // Assert
     // TODO
@@ -69,7 +66,9 @@ describe('cyberpunk', () => {
     expect(initRes.messages.length).toStrictEqual(0);
 
     // Act 1
-    const res = wrapResult(vm.execute(mockEnv, mockInfo, { mirror_env: {} })).unwrap();
+    const res = wrapResult(
+      vm.execute(mockEnv, mockInfo, { mirror_env: {} })
+    ).unwrap();
 
     // Assert 1
     expect(res.data).toBeDefined();
