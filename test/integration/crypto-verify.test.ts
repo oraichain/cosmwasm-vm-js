@@ -53,7 +53,6 @@ describe('crypto-verify', () => {
 
   it('instantiate_works', async () => {
     const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {});
-
     expect(instantiateResponse).toEqual({
       ok: {
         attributes: [],

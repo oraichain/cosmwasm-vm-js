@@ -78,11 +78,11 @@ async function testVersion(version = '0.13') {
     cnt.map((a) => [Buffer.from(a.key.slice(2)).toString(), fromAscii(a.value)])
   );
 
-  //   const queryRes = vm.query(mockEnv, {
-  //     all_tokens: {},
-  //   });
+  const queryRes = vm.query(mockEnv, {
+    all_tokens: {},
+  });
 
-  //   console.log(queryRes);
+  console.log(queryRes);
 }
 
 describe('Old CosmWasmVM', () => {

@@ -126,9 +126,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     }
 
     // if there is end namespace
-    const filterKeyLength = end?.length
-      ? Buffer.from(end.slice(0, 2)).readUint16BE()
-      : 0;
+    const filterKeyLength = end?.length && end[0] == 0 ? end[1] : 0;
 
     const newId = this.iterators.size + 1;
 
@@ -141,16 +139,17 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     let data: Record[] = [];
     for (const key of Array.from(this.dict.keys()).sort()) {
       let keyArr = fromBase64(key);
+
+      // start of search just 1 item
       if (start?.length && compare(start, keyArr) === 1) continue;
 
-      if (filterKeyLength) {
-        // first 2 bytes are length of namespace
-        const keyLength = Buffer.from(keyArr.slice(0, 2)).readUint16BE();
-        // different namespace
-        if (filterKeyLength !== keyLength) continue;
-        // end of search
-        if (compare(keyArr, end!) > -1) break;
+      // different namespace
+      if (filterKeyLength && keyArr[0] === 0 && filterKeyLength != keyArr[1]) {
+        continue;
       }
+
+      // end of search
+      if (end?.length && compare(keyArr, end) > -1) break;
 
       data.push({ key: keyArr, value: this.get(keyArr)! });
     }

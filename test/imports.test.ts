@@ -6,7 +6,7 @@ import {
   MAX_LENGTH_CANONICAL_ADDRESS,
   MAX_LENGTH_HUMAN_ADDRESS,
   Order,
-  Region
+  Region,
 } from '../src';
 import { toByteArray, toNumber } from '../src/helpers/byte-array';
 
@@ -362,10 +362,7 @@ describe('do_addr_humanize', () => {
 
   it('fails for small destination region', () => {
     try {
-      const canonicalAddrRegion = writeData(
-        vm,
-        new Uint8Array(54).fill(0x22)
-      );
+      const canonicalAddrRegion = writeData(vm, new Uint8Array(54).fill(0x22));
       vm.do_addr_humanize(canonicalAddrRegion, vm.allocate(0));
     } catch (e) {
       expect(e).toEqual(new RangeError('offset is out of bounds'));
@@ -388,7 +385,7 @@ describe('do_secp256k1_verify', () => {
   });
 
   it('fails for invalid hash', () => {
-    const hash = new Uint8Array([... testData.ECDSA_HASH_HEX]);
+    const hash = new Uint8Array([...testData.ECDSA_HASH_HEX]);
     hash[0] ^= 0x01;
     const hashPtr = writeData(vm, hash);
     const sigPtr = writeData(vm, testData.ECDSA_SIG_HEX);
@@ -425,7 +422,7 @@ describe('do_secp256k1_verify', () => {
   });
 
   it('fails for invalid signature', () => {
-    const sig = new Uint8Array([... testData.ECDSA_SIG_HEX]);
+    const sig = new Uint8Array([...testData.ECDSA_SIG_HEX]);
     sig[0] ^= 0x01;
     const hashPtr = writeData(vm, testData.ECDSA_HASH_HEX);
     const sigPtr = writeData(vm, sig);
@@ -463,7 +460,7 @@ describe('do_secp256k1_verify', () => {
 
   it('fails for wrong pubkey format', () => {
     try {
-      const pubKey = new Uint8Array([... testData.ECDSA_PUBKEY_HEX]);
+      const pubKey = new Uint8Array([...testData.ECDSA_PUBKEY_HEX]);
       pubKey[0] ^= 0x01;
       const hashPtr = writeData(vm, testData.ECDSA_HASH_HEX);
       const sigPtr = writeData(vm, testData.ECDSA_SIG_HEX);
@@ -476,7 +473,7 @@ describe('do_secp256k1_verify', () => {
 
   it('fails for invalid pubkey', () => {
     try {
-      const pubKey = new Uint8Array([... testData.ECDSA_PUBKEY_HEX]);
+      const pubKey = new Uint8Array([...testData.ECDSA_PUBKEY_HEX]);
       pubKey[1] ^= 0x01;
       const hashPtr = writeData(vm, testData.ECDSA_HASH_HEX);
       const sigPtr = writeData(vm, testData.ECDSA_SIG_HEX);
@@ -582,7 +579,7 @@ describe('do_ed25519_verify', () => {
   });
 
   it('fails for invalid sig', () => {
-    const sig = new Uint8Array([... testData.EDDSA_SIG_HEX]);
+    const sig = new Uint8Array([...testData.EDDSA_SIG_HEX]);
     sig[0] ^= 0x01;
     const hashPtr = writeData(vm, testData.EDDSA_MSG_HEX);
     const sigPtr = writeData(vm, sig);
@@ -612,7 +609,7 @@ describe('do_ed25519_verify', () => {
   });
 
   it('fails for invalid pubkey', () => {
-    const pub = new Uint8Array([... testData.EDDSA_PUBKEY_HEX]);
+    const pub = new Uint8Array([...testData.EDDSA_PUBKEY_HEX]);
     pub[1] ^= 0x01;
     const hashPtr = writeData(vm, testData.EDDSA_MSG_HEX);
     const sigPtr = writeData(vm, testData.EDDSA_SIG_HEX);
@@ -693,7 +690,11 @@ describe('db_scan', () => {
   });
 
   it('unbound works', () => {
-    const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
+    const idRegion = vm.do_db_scan(
+      vm.allocate(0),
+      vm.allocate(0),
+      Order.Ascending
+    );
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
@@ -708,7 +709,11 @@ describe('db_scan', () => {
   });
 
   it('unbound descending works', () => {
-    const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Descending);
+    const idRegion = vm.do_db_scan(
+      vm.allocate(0),
+      vm.allocate(0),
+      Order.Descending
+    );
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
@@ -726,7 +731,8 @@ describe('db_scan', () => {
     const idRegion = vm.do_db_scan(
       writeData(vm, toAscii('anna')),
       writeData(vm, toAscii('bert')),
-      Order.Ascending);
+      Order.Ascending
+    );
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
@@ -738,10 +744,12 @@ describe('db_scan', () => {
   });
 
   it('bound descending works', () => {
+    // ant and tree
     const idRegion = vm.do_db_scan(
       writeData(vm, toAscii('antler')),
       writeData(vm, toAscii('trespass')),
-      Order.Descending);
+      Order.Descending
+    );
     const id = toNumber(idRegion.data);
     expect(id).toBe(1);
 
@@ -753,23 +761,33 @@ describe('db_scan', () => {
   });
 
   it('multiple iterators', () => {
-    const idRegion1 = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
+    const idRegion1 = vm.do_db_scan(
+      vm.allocate(0),
+      vm.allocate(0),
+      Order.Ascending
+    );
     const id1 = toNumber(idRegion1.data);
     expect(id1).toBe(1);
 
-    const idRegion2 = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Descending);
+    const idRegion2 = vm.do_db_scan(
+      vm.allocate(0),
+      vm.allocate(0),
+      Order.Descending
+    );
     const id2 = toNumber(idRegion2.data);
     expect(id2).toBe(2);
 
     expectToBeKvp(vm.do_db_next(idRegion1), testData.KEY1, testData.VALUE1); // first item, first iterator
     expectToBeKvp(vm.do_db_next(idRegion1), testData.KEY2, testData.VALUE2); // second item, first iterator
     expectToBeKvp(vm.do_db_next(idRegion2), testData.KEY2, testData.VALUE2); // first item, second iterator
-    expect(toNumber(vm.do_db_next(idRegion1).data)).toBe(0);                            // end, first iterator
+    expect(toNumber(vm.do_db_next(idRegion1).data)).toBe(0); // end, first iterator
     expectToBeKvp(vm.do_db_next(idRegion2), testData.KEY1, testData.VALUE1); // second item, second iterator
   });
 
   it('fails for invalid order value', () => {
-    expect(() => vm.do_db_scan(vm.allocate(0), vm.allocate(0), 42)).toThrowError('Invalid order value 42');
+    expect(() =>
+      vm.do_db_scan(vm.allocate(0), vm.allocate(0), 42)
+    ).toThrowError('Invalid order value 42');
   });
 });
 
@@ -780,7 +798,11 @@ describe('do_db_next', () => {
   });
 
   it('works', () => {
-    const idRegion = vm.do_db_scan(vm.allocate(0), vm.allocate(0), Order.Ascending);
+    const idRegion = vm.do_db_scan(
+      vm.allocate(0),
+      vm.allocate(0),
+      Order.Ascending
+    );
 
     expectToBeKvp(vm.do_db_next(idRegion), testData.KEY1, testData.VALUE1);
     expectToBeKvp(vm.do_db_next(idRegion), testData.KEY2, testData.VALUE2);
@@ -809,7 +831,7 @@ function expectToBeKvp(
     ...expectedKey,
     ...toByteArray(expectedKey.length, 4),
     ...expectedValue,
-    ...toByteArray(expectedValue.length, 4)
+    ...toByteArray(expectedValue.length, 4),
   ];
 
   expect([...actualItem.data]).toStrictEqual(expectedData);
