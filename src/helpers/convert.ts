@@ -85,8 +85,9 @@ export function getOldInfo({ sender, funds }: MessageInfo): OldMessageInfo {
 
 export function getNewResponse(json: object): object {
   if ('ok' in json) {
-    const { submessages, data, attributes, messages } =
-      json.ok as OldContractResponse;
+    const { submessages, data, attributes, messages } = (
+      json as { ok: OldContractResponse }
+    ).ok;
     const newResponse: ContractResponse = {
       attributes,
       data,
