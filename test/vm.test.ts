@@ -33,7 +33,7 @@ describe('CosmWasmVM', () => {
   it('instantiates', async () => {
     await vm.build(wasmByteCode);
 
-    const region = vm.instantiate(mockEnv, mockInfo, { count: 20 });
+    const json = vm.instantiate(mockEnv, mockInfo, { count: 20 });
     const actual = {
       ok: {
         attributes: [
@@ -49,14 +49,14 @@ describe('CosmWasmVM', () => {
         messages: [],
       },
     };
-    expect(region.json).toEqual(actual);
+    expect(json).toEqual(actual);
   });
 
   it('execute', async () => {
     await vm.build(wasmByteCode);
 
-    let region = vm.instantiate(mockEnv, mockInfo, { count: 20 });
-    region = vm.execute(mockEnv, mockInfo, { increment: {} });
+    let json = vm.instantiate(mockEnv, mockInfo, { count: 20 });
+    json = vm.execute(mockEnv, mockInfo, { increment: {} });
     const actual = {
       ok: {
         attributes: [{ key: 'method', value: 'try_increment' }],
@@ -65,14 +65,14 @@ describe('CosmWasmVM', () => {
         messages: [],
       },
     };
-    expect(region.json).toEqual(actual);
+    expect(json).toEqual(actual);
   });
 
   it('reply', async () => {
     await vm.build(cwMachineBytecode);
 
-    let region = vm.instantiate(mockEnv, mockInfo, {});
-    region = vm.reply(mockEnv, {
+    let json = vm.instantiate(mockEnv, mockInfo, {});
+    json = vm.reply(mockEnv, {
       id: 1,
       result: {
         ok: {
@@ -81,9 +81,9 @@ describe('CosmWasmVM', () => {
         },
       },
     });
-    expect('ok' in region.json).toBeTruthy();
+    expect('ok' in json).toBeTruthy();
 
-    region = vm.reply(mockEnv, {
+    json = vm.reply(mockEnv, {
       id: 2,
       result: {
         ok: {
@@ -92,7 +92,7 @@ describe('CosmWasmVM', () => {
         },
       },
     });
-    expect('error' in region.json).toBeTruthy();
+    expect('error' in json).toBeTruthy();
   });
 
   it('serializes', async () => {

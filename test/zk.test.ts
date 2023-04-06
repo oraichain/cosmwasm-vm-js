@@ -53,7 +53,7 @@ describe('CosmWasmVM', () => {
     const instantiateRes = vm.instantiate(mockEnv, mockInfo, {
       curve: 'bn254',
     });
-    console.log(instantiateRes.json);
+    console.log(instantiateRes);
 
     const executeRes = vm.execute(mockEnv, mockInfo, {
       set_vk_raw: {
@@ -68,7 +68,7 @@ describe('CosmWasmVM', () => {
       },
     });
 
-    const data = (queryRes.json as { ok: string }).ok;
+    const data = (queryRes as { ok: string }).ok;
 
     console.log(JSON.parse(fromAscii(fromBase64(data))));
   });

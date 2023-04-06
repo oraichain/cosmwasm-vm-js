@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync } from 'fs';
 import { VMInstance } from '../src/instance';
 import {
   BasicBackendApi,
@@ -35,8 +35,8 @@ describe('CosmWasmVM', () => {
   it('instantiates', async () => {
     await vm.build(wasmBytecode);
 
-    const region = vm.instantiate(mockEnv, mockInfo, { count: 20 });
-    console.log(region.json);
+    const json = vm.instantiate(mockEnv, mockInfo, { count: 20 });
+    console.log(json);
     console.log(vm.backend);
     const actual = {
       ok: {
@@ -53,15 +53,15 @@ describe('CosmWasmVM', () => {
         messages: [],
       },
     };
-    expect(region.json).toEqual(actual);
+    expect(json).toEqual(actual);
   });
 
   it('execute', async () => {
     await vm.build(wasmBytecode);
 
-    let region = vm.instantiate(mockEnv, mockInfo, { count: 20 });
-    region = vm.execute(mockEnv, mockInfo, { increment: {} });
-    console.log(region.json);
+    let json = vm.instantiate(mockEnv, mockInfo, { count: 20 });
+    json = vm.execute(mockEnv, mockInfo, { increment: {} });
+    console.log(json);
     console.log(vm.backend);
     const actual = {
       ok: {
@@ -71,6 +71,6 @@ describe('CosmWasmVM', () => {
         messages: [],
       },
     };
-    expect(region.json).toEqual(actual);
+    expect(json).toEqual(actual);
   });
 });

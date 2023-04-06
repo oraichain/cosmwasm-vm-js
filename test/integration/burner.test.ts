@@ -6,7 +6,7 @@
 // -----
 // Rust Sources: https://github.com/CosmWasm/cosmwasm/tree/main/contracts/burner
 import { readFileSync } from 'fs';
-import { VMInstance } from "../../src/instance";
+import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
   BasicKVIterStorage,
@@ -15,11 +15,11 @@ import {
   Order,
 } from '../../src/backend';
 import { toAscii } from '@cosmjs/encoding';
-import { Env, MessageInfo } from '../../src/types';
+import { ContractResponse, Env, MessageInfo } from '../../src/types';
 
 class MockQuerier extends BasicQuerier {
   handleQuery(request: any): any {
-    return { amount: [{ denom: 'earth', amount: '1000' }] }
+    return { amount: [{ denom: 'earth', amount: '1000' }] };
   }
 }
 
@@ -39,7 +39,7 @@ const mockEnv: Env = {
     time: '2000000000',
     chain_id: 'columbus-5',
   },
-  contract: { address: 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76' }
+  contract: { address: 'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76' },
 };
 
 let vm: VMInstance;
@@ -54,16 +54,14 @@ describe('burner', () => {
     // Arrange
     const mockInfo: MessageInfo = {
       sender: creator,
-      funds: [
-        { denom: 'earth', amount: '1000' },
-      ],
-    }
+      funds: [{ denom: 'earth', amount: '1000' }],
+    };
 
     // Act
     const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {});
 
     // Assert
-    expect(instantiateResponse.json).toEqual({
+    expect(instantiateResponse).toEqual({
       error: 'Generic error: You can only use this contract for migrations',
     });
   });
@@ -91,7 +89,7 @@ describe('burner', () => {
     const migrateMsg = { payout };
 
     // Act
-    const res = vm.migrate(mockEnv, migrateMsg).json as any;
+    const res = vm.migrate(mockEnv, migrateMsg) as { ok: ContractResponse };
 
     // Assert
     expect(res.ok.messages.length).toStrictEqual(1);

@@ -4,9 +4,14 @@ import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
-import { Env, MessageInfo, OldMessageInfo } from './types';
+import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
-import { getOldEnv, getOldInfo } from './helpers/convert';
+import {
+  getNewResponse,
+  getOldEnv,
+  getOldInfo,
+  OldMessageInfo,
+} from './helpers/convert';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -77,12 +82,16 @@ export class VMInstance {
     const result = await WebAssembly.instantiate(wasmByteCode, imports);
 
     for (const methodName in result.instance.exports) {
-      if (methodName.startsWith('cosmwasm_vm_version_')) {
-        this._version = Number(methodName.substring(20));
+      // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
+      if (methodName === 'cosmwasm_vm_version_4') {
+        this._version = 4;
+        break;
+      }
+      if (methodName.startsWith('interface_version_')) {
+        this._version = Number(methodName.substring(18));
         break;
       }
     }
-
     this.instance = result.instance;
   }
 
@@ -134,35 +143,41 @@ export class VMInstance {
     return this._version;
   }
 
-  public instantiate(env: Env, info: MessageInfo, msg: object): Region {
+  public instantiate(env: Env, info: MessageInfo, msg: object): object {
     let instantiate = this.exports[this.version === 4 ? 'init' : 'instantiate'];
     let envArg = this.version === 4 ? getOldEnv(env) : env;
     let infoArg = this.version === 4 ? getOldInfo(info) : info;
     let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
     let result = instantiate(...args);
-    const ret = this.region(result);
-    console.log(ret.json);
-    return ret;
+    let { json } = this.region(result);
+    if (this.version < 6) {
+      return getNewResponse(json);
+    }
+    return json;
   }
 
-  public execute(env: Env, info: MessageInfo, msg: object): Region {
+  public execute(env: Env, info: MessageInfo, msg: object): object {
     let execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
     let envArg = this.version === 4 ? getOldEnv(env) : env;
     let infoArg = this.version === 4 ? getOldInfo(info) : info;
     let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
     let result = execute(...args);
-    return this.region(result);
+    let { json } = this.region(result);
+    if (this.version < 6) {
+      return getNewResponse(json);
+    }
+    return json;
   }
 
-  public query(env: Env, msg: object): Region {
+  public query(env: Env, msg: object): object {
     let { query } = this.exports;
     let envArg = this.version === 4 ? getOldEnv(env) : env;
     let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
-  public migrate(env: Env, msg: object): Region {
+  public migrate(env: Env, msg: object): object {
     let { migrate } = this.exports;
     let envArg = this.version === 4 ? getOldEnv(env) : env;
     let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
@@ -174,57 +189,61 @@ export class VMInstance {
       args.splice(1, 0, this.allocate_json(infoArg).ptr);
     }
     let result = migrate(...args);
-    return this.region(result);
+    let { json } = this.region(result);
+    if (this.version < 6) {
+      return getNewResponse(json);
+    }
+    return json;
   }
 
-  public reply(env: Env, msg: object): Region {
+  public reply(env: Env, msg: object): object {
     let { reply } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = reply(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
   // IBC implementation
-  public ibc_channel_open(env: Env, msg: object): Region {
+  public ibc_channel_open(env: Env, msg: object): object {
     let { ibc_channel_open } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = ibc_channel_open(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
-  public ibc_channel_connect(env: Env, msg: object): Region {
+  public ibc_channel_connect(env: Env, msg: object): object {
     let { ibc_channel_connect } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = ibc_channel_connect(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
-  public ibc_channel_close(env: Env, msg: object): Region {
+  public ibc_channel_close(env: Env, msg: object): object {
     let { ibc_channel_close } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = ibc_channel_close(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
-  public ibc_packet_receive(env: Env, msg: object): Region {
+  public ibc_packet_receive(env: Env, msg: object): object {
     let { ibc_packet_receive } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = ibc_packet_receive(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
-  public ibc_packet_ack(env: Env, msg: object): Region {
+  public ibc_packet_ack(env: Env, msg: object): object {
     let { ibc_packet_ack } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = ibc_packet_ack(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
-  public ibc_packet_timeout(env: Env, msg: object): Region {
+  public ibc_packet_timeout(env: Env, msg: object): object {
     let { ibc_packet_timeout } = this.exports;
     let args = [env, msg].map((x) => this.allocate_json(x).ptr);
     let result = ibc_packet_timeout(...args);
-    return this.region(result);
+    return this.region(result).json;
   }
 
   db_read(key_ptr: number): number {
