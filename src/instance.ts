@@ -4,8 +4,9 @@ import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { IBackend, Record } from './backend';
-import { Env, MessageInfo } from './types';
+import { Env, MessageInfo, OldMessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
+import { getOldEnv, getOldInfo } from './helpers/convert';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -17,6 +18,8 @@ export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
 export const EDDSA_PUBKEY_LEN: number = 32;
 
 export class VMInstance {
+  // default version
+  private _version: number = 8;
   public instance?: WebAssembly.Instance;
   public debugMsgs: string[] = [];
 
@@ -65,10 +68,21 @@ export class VMInstance {
         debug: this.debug.bind(this),
         query_chain: this.query_chain.bind(this),
         abort: this.abort.bind(this),
+        // old support
+        canonicalize_address: this.addr_canonicalize.bind(this),
+        humanize_address: this.do_addr_humanize.bind(this),
       },
     };
 
     const result = await WebAssembly.instantiate(wasmByteCode, imports);
+
+    for (const methodName in result.instance.exports) {
+      if (methodName.startsWith('cosmwasm_vm_version_')) {
+        this._version = Number(methodName.substring(20));
+        break;
+      }
+    }
+
     this.instance = result.instance;
   }
 
@@ -116,30 +130,49 @@ export class VMInstance {
     return region;
   }
 
+  public get version(): number {
+    return this._version;
+  }
+
   public instantiate(env: Env, info: MessageInfo, msg: object): Region {
-    let { instantiate } = this.exports;
-    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
+    let instantiate = this.exports[this.version === 4 ? 'init' : 'instantiate'];
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let infoArg = this.version === 4 ? getOldInfo(info) : info;
+    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
     let result = instantiate(...args);
-    return this.region(result);
+    const ret = this.region(result);
+    console.log(ret.json);
+    return ret;
   }
 
   public execute(env: Env, info: MessageInfo, msg: object): Region {
-    let { execute } = this.exports;
-    let args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
+    let execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let infoArg = this.version === 4 ? getOldInfo(info) : info;
+    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
     let result = execute(...args);
     return this.region(result);
   }
 
   public query(env: Env, msg: object): Region {
     let { query } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
     let result = query(...args);
     return this.region(result);
   }
 
   public migrate(env: Env, msg: object): Region {
     let { migrate } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
+    if (this.version === 4) {
+      const infoArg: OldMessageInfo = {
+        sender: '',
+        sent_funds: [],
+      };
+      args.splice(1, 0, this.allocate_json(infoArg).ptr);
+    }
     let result = migrate(...args);
     return this.region(result);
   }

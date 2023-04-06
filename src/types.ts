@@ -12,9 +12,21 @@ export type Env =
       contract: ContractInfo;
     };
 
+export type OlEnv = {
+  block: OlBlockInfo;
+  contract: ContractInfo;
+};
+
 export type BlockInfo = {
   height: number | string;
   time: number | string;
+  chain_id: string;
+};
+
+export type OlBlockInfo = {
+  height: number | string;
+  time: number;
+  time_nanos: number | string;
   chain_id: string;
 };
 
@@ -36,4 +48,9 @@ export type Coin = {
 export type MessageInfo = {
   sender: Address;
   funds: Coin[];
+};
+
+export type OldMessageInfo = {
+  sender: Address;
+  sent_funds: Coin[];
 };
