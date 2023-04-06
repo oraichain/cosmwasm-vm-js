@@ -440,6 +440,18 @@ export class VMInstance {
       return this.allocate_bytes(Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]));
     }
 
+    // old version following standard: [value,key,key.length]
+    if (this.version === 4) {
+      return this.allocate_bytes(
+        new Uint8Array([
+          ...record.value,
+          ...record.key,
+          ...toByteArray(record.key.length, 4),
+        ])
+      );
+    }
+
+    // separate by 4 bytes [key,key.length,value,value.length]
     return this.allocate_bytes(
       new Uint8Array([
         ...record.key,

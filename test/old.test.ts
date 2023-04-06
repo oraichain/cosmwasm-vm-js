@@ -33,11 +33,7 @@ async function testVersion(version = '0.13') {
     storage: new BasicKVIterStorage(),
     querier: new BasicQuerier(),
   });
-  await vm.build(
-    readFileSync(
-      `/Users/phamtu/Projects/oraiwasm/package/plus/oraichain_nft/artifacts/oraichain_nft.wasm`
-    )
-  );
+  await vm.build(readFileSync(`testdata/v${version}/oraichain_nft.wasm`));
   const instantiateRes = vm.instantiate(mockEnv, mockInfo, {
     name: 'name',
     version: 'version',
@@ -67,22 +63,16 @@ async function testVersion(version = '0.13') {
     },
   });
 
-  let iterId = vm.backend.storage.scan(
-    Buffer.from('\x00\x06tokens'),
-    Buffer.from('\x00\x06tokent'),
-    Order.Ascending
-  );
+  let queryRes = vm.query(mockEnv, { all_tokens: {} }) as { ok: any };
+  console.log(JSON.parse(fromAscii(fromBase64(queryRes.ok))));
 
-  let cnt = vm.backend.storage.all(iterId);
-  console.log(
-    cnt.map((a) => [Buffer.from(a.key.slice(2)).toString(), fromAscii(a.value)])
-  );
+  queryRes = vm.query(mockEnv, {
+    tokens: { owner: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj' },
+  }) as { ok: any };
 
-  const queryRes = vm.query(mockEnv, {
-    all_tokens: {},
+  expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
+    tokens: ['token_id1', 'token_id2'],
   });
-
-  console.log(queryRes);
 }
 
 describe('Old CosmWasmVM', () => {
