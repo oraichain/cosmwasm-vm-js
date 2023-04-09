@@ -99,27 +99,30 @@ export interface IbcTimeout {
   timestamp?: string;
 }
 
-export type IbcMsg =
-  | {
-      transfer: {
-        channel_id: string;
-        to_address: Address;
-        amount: Coin;
-        /// when packet times out, measured on remote chain
-        timeout: IbcTimeout;
-      };
-    }
-  | {
-      send_packet: {
-        channel_id: string;
-        data: Binary;
-        /// when packet times out, measured on remote chain
-        timeout: IbcTimeout;
-      };
-    }
-  | {
-      close_channel: { channel_id: string };
-    };
+export type IbcMsgTransfer = {
+  transfer: {
+    channel_id: string;
+    to_address: Address;
+    amount: Coin;
+    /// when packet times out, measured on remote chain
+    timeout: IbcTimeout;
+  };
+};
+
+export type IbcMsgSendPacket = {
+  send_packet: {
+    channel_id: string;
+    data: Binary;
+    /// when packet times out, measured on remote chain
+    timeout: IbcTimeout;
+  };
+};
+
+export type IbcMsgCloseChannel = {
+  close_channel: { channel_id: string };
+};
+
+export type IbcMsg = IbcMsgTransfer | IbcMsgSendPacket | IbcMsgCloseChannel;
 
 export type CosmosMsg =
   | {
