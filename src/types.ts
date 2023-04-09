@@ -102,7 +102,7 @@ export interface IbcTimeout {
 export type IbcMsg =
   | {
       transfer: {
-        channel_id: String;
+        channel_id: string;
         to_address: Address;
         amount: Coin;
         /// when packet times out, measured on remote chain
@@ -111,14 +111,14 @@ export type IbcMsg =
     }
   | {
       send_packet: {
-        channel_id: String;
+        channel_id: string;
         data: Binary;
         /// when packet times out, measured on remote chain
         timeout: IbcTimeout;
       };
     }
   | {
-      close_channel: { channel_id: String };
+      close_channel: { channel_id: string };
     };
 
 export type CosmosMsg =
