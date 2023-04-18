@@ -68,7 +68,7 @@ export function getOldEnv({
   return {
     contract,
     block: {
-      time: Math.round(time_nanos / 1_000_000),
+      time: Math.round(time_nanos / 1_000_000_000),
       time_nanos,
       height,
       chain_id,
