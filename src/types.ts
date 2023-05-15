@@ -74,19 +74,28 @@ export type BankMsg =
 
 export interface Execute {
   contract_addr: Address;
-  msg: string;
+  msg: Binary;
   funds: Coin[];
 }
 
 export interface Instantiate {
   admin: Address | null;
   code_id: number;
-  msg: string;
+  msg: Binary;
   funds: Coin[];
   label: string;
 }
 
-export type WasmMsg = { execute: Execute } | { instantiate: Instantiate };
+export interface Migrate {
+  contract_addr: Address;
+  new_code_id: number;
+  msg: Binary;
+}
+
+export type WasmMsg =
+  | { execute: Execute }
+  | { instantiate: Instantiate }
+  | { migrate: Instantiate };
 
 /// IBC types
 export interface IbcTimeoutBlock {
