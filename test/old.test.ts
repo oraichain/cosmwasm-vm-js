@@ -124,4 +124,49 @@ describe('Old CosmWasmVM', () => {
   it('version 0.14', async () => {
     await testVersion('0.14');
   });
+
+  it('migrate 0.13', async () => {
+    const vm = new VMInstance({
+      backend_api: new BasicBackendApi('orai'),
+      storage: new BasicKVIterStorage(),
+      querier: new BasicQuerier(),
+    });
+    await vm.build(readFileSync(`testdata/v0.13/oraichain_nft.wasm`));
+    const instantiateRes = vm.instantiate(mockEnv, mockInfo, {
+      name: 'name',
+      version: 'version',
+      symbol: 'symbol',
+      minter: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
+    });
+
+    expect('ok' in instantiateRes).toBeTruthy();
+
+    vm.execute(mockEnv, mockInfo, {
+      mint: {
+        token_id: 'token_id1',
+        owner: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
+        name: 'name1',
+        description: 'description1',
+        image: 'image1',
+      },
+    });
+
+    let queryRes = vm.query(mockEnv, { contract_info: {} }) as { ok: any };
+    expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
+      name: 'name',
+      symbol: 'symbol',
+      version: 'version',
+    });
+
+    // now try to migrate
+    await vm.build(readFileSync(`testdata/v0.13/oraichain_nft_v2.wasm`));
+    vm.migrate(mockEnv, { test_field: 'abc' });
+
+    queryRes = vm.query(mockEnv, { contract_info: {} }) as { ok: any };
+    expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
+      name: 'name',
+      symbol: 'symbol',
+      version: 'abc',
+    });
+  });
 });
