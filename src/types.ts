@@ -1,6 +1,6 @@
 import { Coin } from '@cosmjs/amino';
 export type Address = string;
-
+export type Decimal = string;
 export type Binary = string;
 
 /** Port of [Env (Rust)](https://docs.rs/cosmwasm-std/1.1.4/cosmwasm_std/struct.Env.html) */
@@ -133,12 +133,95 @@ export type IbcMsgCloseChannel = {
 
 export type IbcMsg = IbcMsgTransfer | IbcMsgSendPacket | IbcMsgCloseChannel;
 
-export type CosmosMsg =
+export type StakingMsg =
+  | { delegate: { validator: string; amount: Coin } }
+  /// This is translated to a [MsgUndelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L112-L121).
+  /// `delegator_address` is automatically filled with the current contract's address.
+  | { undelegate: { validator: string; amount: Coin } }
+  /// This is translated to a [MsgBeginRedelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L95-L105).
+  /// `delegator_address` is automatically filled with the current contract's address.
+  | {
+      redelegate: {
+        src_validator: string;
+        dst_validator: string;
+        amount: Coin;
+      };
+    };
+
+export type DistributionMsg =
+  | {
+      /// This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37).
+      /// `delegator_address` is automatically filled with the current contract's address.
+      set_withdraw_address: {
+        /// The `withdraw_address`
+        address: string;
+      };
+    }
+  /// This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
+  /// `delegator_address` is automatically filled with the current contract's address.
+  | {
+      withdraw_delegator_reward: {
+        /// The `validator_address`
+        validator: string;
+      };
+    };
+
+export enum VoteOption {
+  Yes,
+  No,
+  Abstain,
+  NoWithVeto,
+}
+
+export interface WeightedVoteOption {
+  option: VoteOption;
+  weight: Decimal;
+}
+
+export type GovMsg =
+  | {
+      /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
+      vote: {
+        proposal_id: number;
+        /// The vote option.
+        ///
+        /// This should be called "option" for consistency with Cosmos SDK. Sorry for that.
+        /// See <https://github.com/CosmWasm/cosmwasm/issues/1571>.
+        vote: VoteOption;
+      };
+    }
+  /// This maps directly to [MsgVoteWeighted](https://github.com/cosmos/cosmos-sdk/blob/v0.45.8/proto/cosmos/gov/v1beta1/tx.proto#L66-L78) in the Cosmos SDK with voter set to the contract address.
+  | {
+      vote_weighted: {
+        proposal_id: number;
+        options: WeightedVoteOption[];
+      };
+    };
+
+export type CosmosMsg<T = any> =
   | {
       bank: BankMsg;
     }
+  | {
+      custom: T;
+    }
+  | {
+      staking: StakingMsg;
+    }
+  | {
+      distribution: DistributionMsg;
+    }
+  | {
+      stargate: {
+        type_url: string;
+        value: Binary;
+      };
+    }
+  | { ibc: IbcMsg }
   | { wasm: WasmMsg }
-  | { ibc: IbcMsg };
+  | {
+      gov: GovMsg;
+    };
 
 /// response
 
