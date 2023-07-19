@@ -4,7 +4,7 @@ import {
   groth16_verify,
   keccak_256,
   sha256,
-} from 'cosmwasm-vm-js-zk/nodejs';
+} from '@oraichain/cosmwasm-vm-zk-nodejs';
 import { BasicBackendApi } from './backendApi';
 
 const poseidon = new Poseidon();

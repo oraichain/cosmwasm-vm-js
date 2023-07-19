@@ -72,4 +72,4 @@ const nodeConfig = {
   },
 };
 
-module.exports = [webConfig, nodeConfig];
+module.exports = process.env.TARGET === 'web' ? webConfig : nodeConfig;
