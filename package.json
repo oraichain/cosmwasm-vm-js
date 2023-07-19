@@ -1,10 +1,9 @@
 {
-  "name": "@terran-one/cosmwasm-vm-js",
-  "version": "0.2.16",
+  "name": "@oraichain/cosmwasm-vm-js",
+  "version": "0.2.17",
   "license": "MIT",
-  "author": "TerranOne",
-  "main": "src/index.ts",
-  "types": "src",
+  "author": "TerranOne, Oraichain Labs",
+  "main": "dist/index.js",
   "type": "commonjs",
   "files": [
     "dist"
@@ -13,6 +12,7 @@
     "registry": "https://registry.npmjs.org"
   },
   "scripts": {
+    "deploy": "yarn publish --access public --patch",
     "build": "tsc --module commonjs && webpack --mode production",
     "size": "size-limit",
     "test": "dts test",
@@ -53,8 +53,8 @@
     "@babel/preset-typescript": "^7.16.7",
     "@size-limit/preset-small-lib": "^7.0.8",
     "@tsconfig/recommended": "^1.0.1",
-    "@types/jest": "^27.5.2",
     "@types/elliptic": "^6.4.14",
+    "@types/jest": "^27.5.2",
     "@types/secp256k1": "^4.0.3",
     "dts-cli": "^1.5.1",
     "husky": "^7.0.4",
@@ -70,10 +70,10 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "@cosmjs/crypto": "^0.29.5",
     "@cosmjs/amino": "^0.29.5",
+    "@cosmjs/crypto": "^0.29.5",
     "@cosmjs/encoding": "^0.29.5",
-    "cosmwasm-vm-js-zk": "https://github.com/oraichain/cosmwasm-vm-js-zk.git",
+    "@oraichain/cosmwasm-vm-zk-nodejs": "^0.0.7",
     "bech32": "1.1.4",
     "elliptic": "^6.5.4",
     "immutable": "^4.1.0",
