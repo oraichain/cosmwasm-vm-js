@@ -16,20 +16,20 @@ should be verified against the original implementation for critical use-cases.
 Add the `cosmwasm-vm-js` package as a dependency in your `package.json`.
 
 ```sh
-npm install -S @terran-one/cosmwasm-vm-js
+npm install -S @oraichain/cosmwasm-vm-js
 ```
 
 or
 
 ```sh
-yarn add @terran-one/cosmwasm-vm-js
+yarn add @oraichain/cosmwasm-vm-js
 ```
 
 ## Usage
 
 ```ts
 import { readFileSync } from 'fs';
-import { VMInstance } from '@terran-one/cosmwasm-vm-js';
+import { VMInstance } from '@oraichain/cosmwasm-vm-js';
 import {
   BasicBackendApi,
   BasicKVIterStorage,
@@ -134,23 +134,23 @@ and more.
 
 The following WASM imports have been implemented according to `imports.rs` in `cosmwasm-vm`.
 
-| Import Name                | Implemented?       | Tested?            | Notes                                        |
-| -------------------------- |--------------------|--------------------| -------------------------------------------- |
-| `db_read`                  | :white_check_mark: | :white_check_mark: |                                              |
-| `db_write`                 | :white_check_mark: | :white_check_mark: |                                              |
-| `db_remove`                | :white_check_mark: | :white_check_mark: |                                              |
-| `db_scan`                  | :white_check_mark: | :white_check_mark: |                                              |
-| `db_next`                  | :white_check_mark: | :white_check_mark: |                                              |
-| `addr_humanize`            | :white_check_mark: | :white_check_mark: |                                              |
-| `addr_canonicalize`        | :white_check_mark: | :white_check_mark: |                                              |
-| `addr_validate`            | :white_check_mark: | :white_check_mark: |                                              |
-| `secp256k1_verify`         | :white_check_mark: | :white_check_mark: |                                              |
-| `secp256k1_recover_pubkey` | :white_check_mark: | :white_check_mark: |                                              |
-| `ed25519_verify`           | :white_check_mark: | :white_check_mark: |                                              |
-| `ed25519_batch_verify`     | :white_check_mark: | :white_check_mark: |                                              |
+| Import Name                | Implemented?       | Tested?            | Notes                                                        |
+| -------------------------- | ------------------ | ------------------ | ------------------------------------------------------------ |
+| `db_read`                  | :white_check_mark: | :white_check_mark: |                                                              |
+| `db_write`                 | :white_check_mark: | :white_check_mark: |                                                              |
+| `db_remove`                | :white_check_mark: | :white_check_mark: |                                                              |
+| `db_scan`                  | :white_check_mark: | :white_check_mark: |                                                              |
+| `db_next`                  | :white_check_mark: | :white_check_mark: |                                                              |
+| `addr_humanize`            | :white_check_mark: | :white_check_mark: |                                                              |
+| `addr_canonicalize`        | :white_check_mark: | :white_check_mark: |                                                              |
+| `addr_validate`            | :white_check_mark: | :white_check_mark: |                                                              |
+| `secp256k1_verify`         | :white_check_mark: | :white_check_mark: |                                                              |
+| `secp256k1_recover_pubkey` | :white_check_mark: | :white_check_mark: |                                                              |
+| `ed25519_verify`           | :white_check_mark: | :white_check_mark: |                                                              |
+| `ed25519_batch_verify`     | :white_check_mark: | :white_check_mark: |                                                              |
 | `debug`                    | :white_check_mark: | :white_check_mark: | Appends to a list of strings instead of printing to console. |
-| `query_chain`              | :white_check_mark: | :white_check_mark: |                                              |
-| `abort`                    | :white_check_mark: | :white_check_mark: |                                              |
+| `query_chain`              | :white_check_mark: | :white_check_mark: |                                                              |
+| `abort`                    | :white_check_mark: | :white_check_mark: |                                                              |
 
 ## Environment & Storage
 
