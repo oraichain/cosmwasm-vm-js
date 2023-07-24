@@ -3,7 +3,6 @@ import * as Querier from './querier';
 import * as Storage from './storage';
 
 export * from './backendApi';
-export * from './zkbackendApi';
 export * from './querier';
 export * from './storage';
 
