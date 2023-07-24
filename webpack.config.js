@@ -31,39 +31,7 @@ const commonConfig = {
   ],
 };
 
-const webConfig = {
-  ...commonConfig,
-  target: 'web',
-  output: {
-    filename: 'bundle.js',
-    libraryTarget: 'umd',
-    library: 'cosmwasm-vm-js',
-  },
-  resolve: {
-    ...commonConfig.resolve,
-    fallback: {
-      stream: require.resolve('stream-browserify'),
-      buffer: require.resolve('buffer'),
-      assert: require.resolve('assert'),
-      'process/browser': require.resolve('process'),
-      util: require.resolve('util'),
-    },
-  },
-  plugins: [
-    ...commonConfig.plugins,
-    new webpack.ProvidePlugin({
-      Buffer: ['buffer', 'Buffer'],
-    }),
-    new webpack.ProvidePlugin({
-      process: 'process/browser',
-    }),
-  ],
-  optimization: {
-    minimize: true,
-  },
-};
-
-const nodeConfig = {
+module.exports = {
   ...commonConfig,
   target: 'node',
   output: {
@@ -71,5 +39,3 @@ const nodeConfig = {
     filename: 'bundle.node.js',
   },
 };
-
-module.exports = process.env.TARGET === 'web' ? webConfig : nodeConfig;
