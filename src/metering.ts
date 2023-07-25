@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { wasm2json, json2wasm, text2json } from 'wasm-json-toolkit';
-import { SECTION_IDS } from 'wasm-json-toolkit/json2wasm';
+import { wasm2json, json2wasm, text2json } from 'warp-wasm-json-toolkit';
+import { SECTION_IDS } from 'warp-wasm-json-toolkit/json2wasm';
 
 const defaultCostTable = {
   start: 0,
