@@ -1,6 +1,6 @@
 {
   "name": "@oraichain/cosmwasm-vm-js",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "license": "MIT",
   "author": "TerranOne, Oraichain Labs",
   "main": "dist/index.js",
