@@ -3,8 +3,7 @@ import bech32 from 'bech32';
 import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
-// @ts-ignore
-import metering from 'wasm-metering';
+import { meterWASM } from './metering';
 import {
   GAS_COST_CANONICALIZE,
   GAS_COST_HUMANIZE,
@@ -74,7 +73,7 @@ export class VMInstance {
     };
 
     if (this.env) {
-      const meteredWasm = metering.meterWASM(wasmByteCode);
+      const meteredWasm = meterWASM(wasmByteCode);
       const mod = new WebAssembly.Module(meteredWasm);
       Object.assign(imports, {
         metering: {

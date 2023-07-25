@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { fromAscii, fromBase64, toAscii } from '@cosmjs/encoding';
 import { Env, MessageInfo } from '../src/types';
-import { VMInstance } from '../src';
+import { Environment, VMInstance } from '../src';
 
 import {
   BasicBackendApi,
@@ -126,19 +126,26 @@ describe('Old CosmWasmVM', () => {
   });
 
   it('migrate 0.13', async () => {
-    const vm = new VMInstance({
-      backend_api: new BasicBackendApi('orai'),
-      storage: new BasicKVIterStorage(),
-      querier: new BasicQuerier(),
-    });
+    const backend_api = new BasicBackendApi('orai');
+    const env = new Environment(backend_api);
+    const vm = new VMInstance(
+      {
+        backend_api,
+        storage: new BasicKVIterStorage(),
+        querier: new BasicQuerier(),
+      },
+      env
+    );
+
     await vm.build(readFileSync(`testdata/v0.13/oraichain_nft.wasm`));
+    const currentGasUsed = vm.gasUsed;
     const instantiateRes = vm.instantiate(mockEnv, mockInfo, {
       name: 'name',
       version: 'version',
       symbol: 'symbol',
       minter: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
     });
-
+    console.log('gasUsed', vm.gasUsed - currentGasUsed);
     expect('ok' in instantiateRes).toBeTruthy();
 
     vm.execute(mockEnv, mockInfo, {
