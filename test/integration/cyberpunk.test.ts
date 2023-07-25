@@ -8,6 +8,7 @@ import {
 } from '../../src/backend';
 import type { Env, MessageInfo } from '../../src/types';
 import { parseBase64Response, wrapResult } from '../common/test-vm';
+import { Environment } from '../../src';
 
 const wasmBytecode = readFileSync('testdata/v1.1/cyberpunk.wasm');
 const backend: IBackend = {
@@ -44,7 +45,8 @@ describe('cyberpunk', () => {
   it.skip('execute_argon2', async () => {
     // gas limit not implemented
     // Arrange
-    vm = new VMInstance(backend, true, 100_000_000_000_000);
+    const env = new Environment(backend, 100_000_000_000_000);
+    vm = new VMInstance(backend, env);
     const initRes = vm.instantiate(mockEnv, mockInfo, {}) as any;
     expect(initRes.messages.length).toStrictEqual(0);
 

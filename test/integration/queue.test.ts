@@ -8,6 +8,7 @@ import {
 } from '../../src/backend';
 import { Region } from '../../src/memory';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
+import { Environment } from '../../src';
 
 const wasmBytecode = readFileSync('testdata/v1.1/queue.wasm');
 
@@ -37,8 +38,8 @@ describe('queue', () => {
       storage: new BasicKVIterStorage(),
       querier: new BasicQuerier(),
     };
-
-    vm = new VMInstance(backend, true, 100_000_000_000_000);
+    const env = new Environment(backend, 100_000_000_000_000);
+    vm = new VMInstance(backend, env);
     await vm.build(wasmBytecode);
   });
 

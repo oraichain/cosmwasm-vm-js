@@ -6,6 +6,7 @@ import {
   BasicQuerier,
   IBackend,
 } from '../src/backend';
+import { Environment } from '../src';
 
 const wasmBytecode = readFileSync('testdata/v1.0/cosmwasm_vm_test.wasm');
 const backend: IBackend = {
@@ -13,8 +14,8 @@ const backend: IBackend = {
   storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
-
-const vm = new VMInstance(backend, true);
+const env = new Environment(backend);
+const vm = new VMInstance(backend, env);
 const mockEnv = {
   block: {
     height: 1337,

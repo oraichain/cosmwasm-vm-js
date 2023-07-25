@@ -22,7 +22,7 @@ import {
   getOldInfo,
   OldMessageInfo,
 } from './helpers/convert';
-import { DEFAULT_GAS_LIMIT, Environment } from './environment';
+import { Environment } from './environment';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -38,16 +38,11 @@ export class VMInstance {
   private _version: number = 8;
   public instance?: WebAssembly.Instance;
   public debugMsgs: string[] = [];
-  public env?: Environment;
 
   // override this
   public static eddsa: EllipticEddsa;
 
-  constructor(
-    public backend: IBackend,
-    public metering: boolean = false,
-    public readonly gasLimit: number = DEFAULT_GAS_LIMIT
-  ) {}
+  constructor(public backend: IBackend, public readonly env?: Environment) {}
 
   public async build(wasmByteCode: ArrayBuffer) {
     let imports = {
@@ -78,7 +73,7 @@ export class VMInstance {
       },
     };
 
-    if (this.metering) {
+    if (this.env) {
       const meteredWasm = metering.meterWASM(wasmByteCode);
       const mod = new WebAssembly.Module(meteredWasm);
       Object.assign(imports, {
@@ -96,8 +91,6 @@ export class VMInstance {
         },
       });
       this.instance = new WebAssembly.Instance(mod, imports);
-      // init env
-      this.env = new Environment(this.instance!, this.backend, this.gasLimit);
     } else {
       this.instance = new WebAssembly.Instance(
         new WebAssembly.Module(wasmByteCode),
@@ -130,6 +123,10 @@ export class VMInstance {
 
   public get gasUsed() {
     return this.env?.data.gas_state.externally_used_gas ?? 0;
+  }
+
+  public get gasLimit() {
+    return this.env?.data.gas_state.gas_limit ?? 0;
   }
 
   public get remainingGas() {

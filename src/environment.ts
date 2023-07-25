@@ -51,7 +51,7 @@ export interface ContextData {
   gas_state: GasState;
   storage: IStorage;
   storage_readonly: boolean;
-  wasmer_instance: any;
+  // wasmer_instance: any;
 }
 
 export class Environment {
@@ -61,11 +61,7 @@ export class Environment {
   public data: ContextData;
   public gasConfig: GasConfig;
 
-  constructor(
-    instance: WebAssembly.Instance,
-    backend: IBackend,
-    gasLimit: number
-  ) {
+  constructor(backend: IBackend, gasLimit: number = DEFAULT_GAS_LIMIT) {
     const data: ContextData = {
       gas_state: {
         gas_limit: gasLimit,
@@ -73,7 +69,7 @@ export class Environment {
       },
       storage: backend.storage,
       storage_readonly: false, // allow update
-      wasmer_instance: instance,
+      // wasmer_instance: instance,
     };
 
     this.storage = backend.storage;
