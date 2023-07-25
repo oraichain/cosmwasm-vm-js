@@ -11,7 +11,7 @@ export interface IEnvironment {
   call_function(name: string, args: object[]): object;
 }
 
-const GAS_PER_US = 1_000_000_000;
+const GAS_PER_US = 1;
 
 export interface GasConfig {
   secp256k1_verify_cost: number;
@@ -132,6 +132,6 @@ export class Environment {
 
   public process_gas_info(info: GasInfo) {
     // accumulate externally used gas
-    this.data.gas_state.externally_used_gas += info.externally_used;
+    this.data.gas_state.externally_used_gas += info.externally_used + info.cost;
   }
 }

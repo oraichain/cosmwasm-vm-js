@@ -18,7 +18,7 @@ import {
   getOldInfo,
   OldMessageInfo,
 } from './helpers/convert';
-import { Environment, ContextData } from './environment';
+import { Environment } from './environment';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;

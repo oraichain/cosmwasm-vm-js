@@ -102,5 +102,7 @@ describe('CosmWasmVM', () => {
     const data = (queryRes as { ok: string }).ok;
 
     console.log(JSON.parse(fromAscii(fromBase64(data))));
+
+    console.log('gasUsed', vm.gasUsed);
   });
 });
