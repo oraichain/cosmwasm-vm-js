@@ -78,13 +78,11 @@ export class VMInstance {
       Object.assign(imports, {
         metering: {
           usegas: (gas: number) => {
-            if (this.env) {
-              let gasInfo = GasInfo.with_cost(gas);
-              this.env.process_gas_info(gasInfo);
+            let gasInfo = GasInfo.with_cost(gas);
+            this.env!.process_gas_info(gasInfo);
 
-              if (this.gasUsed > this.gasLimit) {
-                throw new Error('out of gas!');
-              }
+            if (this.gasUsed > this.gasLimit) {
+              throw new Error('out of gas!');
             }
           },
         },
