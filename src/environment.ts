@@ -6,6 +6,7 @@ export interface IEnvironment {
 
 export const DEFAULT_GAS_LIMIT = 1_000_000_000_000; // ~1ms
 export const GAS_PER_MS = 1_000_000;
+export const GAS_PER_COST = 10;
 
 export interface GasConfig {
   secp256k1_verify_cost: number;
@@ -120,10 +121,10 @@ export class Environment {
   }
 
   public get gasUsed() {
-    return this.data.gas_state.externally_used_gas;
+    return Math.round(this.data.gas_state.externally_used_gas / GAS_PER_COST);
   }
 
   public get gasLimit() {
-    return this.data.gas_state.gas_limit;
+    return Math.round(this.data.gas_state.gas_limit / GAS_PER_COST);
   }
 }
