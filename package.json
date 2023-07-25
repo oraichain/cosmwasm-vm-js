@@ -1,6 +1,6 @@
 {
   "name": "@oraichain/cosmwasm-vm-js",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "license": "MIT",
   "author": "TerranOne, Oraichain Labs",
   "main": "dist/index.js",
@@ -79,6 +79,7 @@
     "process": "^0.11.10",
     "secp256k1": "^4.0.3",
     "synchronized-promise": "^0.3.1",
-    "util": "^0.12.4"
+    "util": "^0.12.4",
+    "wasm-metering": "^0.2.1"
   }
 }
