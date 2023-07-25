@@ -122,11 +122,11 @@ export class VMInstance {
   }
 
   public get gasUsed() {
-    return this.env?.data.gas_state.externally_used_gas ?? 0;
+    return this.env?.gasUsed ?? 0;
   }
 
   public get gasLimit() {
-    return this.env?.data.gas_state.gas_limit ?? 0;
+    return this.env?.gasLimit ?? 0;
   }
 
   public get remainingGas() {

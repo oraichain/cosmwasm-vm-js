@@ -118,4 +118,12 @@ export class Environment {
     // accumulate externally used gas
     this.data.gas_state.externally_used_gas += info.externally_used + info.cost;
   }
+
+  public get gasUsed() {
+    return this.data.gas_state.externally_used_gas;
+  }
+
+  public get gasLimit() {
+    return this.data.gas_state.gas_limit;
+  }
 }
