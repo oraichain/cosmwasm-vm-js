@@ -14,7 +14,7 @@ const backend: IBackend = {
   querier: new BasicQuerier(),
 };
 
-const vm = new VMInstance(backend);
+const vm = new VMInstance(backend, true);
 const mockEnv = {
   block: {
     height: 1337,
@@ -60,9 +60,10 @@ describe('CosmWasmVM', () => {
     await vm.build(wasmBytecode);
 
     let json = vm.instantiate(mockEnv, mockInfo, { count: 20 });
+    let currentGasUsed = vm.gasUsed;
     json = vm.execute(mockEnv, mockInfo, { increment: {} });
+    console.log('gasUsed', vm.gasUsed - currentGasUsed);
     console.log(json);
-    console.log(vm.backend);
     const actual = {
       ok: {
         attributes: [{ key: 'method', value: 'try_increment' }],

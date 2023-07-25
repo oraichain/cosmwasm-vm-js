@@ -75,6 +75,9 @@ export class BasicKVStorage implements IStorage {
   }
 }
 
+export const GAS_COST_LAST_ITERATION = 37;
+export const GAS_COST_RANGE = 11;
+
 export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
   constructor(
     public dict: Immutable.Map<string, string> = Immutable.Map(),

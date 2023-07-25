@@ -11,7 +11,8 @@ export interface IEnvironment {
   call_function(name: string, args: object[]): object;
 }
 
-const GAS_PER_US = 1;
+export const DEFAULT_GAS_LIMIT = 1_000_000_000_000; // ~1ms
+export const GAS_PER_MS = 1_000_000;
 
 export interface GasConfig {
   secp256k1_verify_cost: number;
@@ -63,11 +64,11 @@ export class Environment {
   constructor(
     instance: WebAssembly.Instance,
     backend: IBackend,
-    gasLimit?: number
+    gasLimit: number
   ) {
     const data: ContextData = {
       gas_state: {
-        gas_limit: gasLimit ?? 0,
+        gas_limit: gasLimit,
         externally_used_gas: 0,
       },
       storage: backend.storage,
@@ -82,31 +83,31 @@ export class Environment {
     this.call_function = this.call_function.bind(this);
     this.gasConfig = {
       // ~154 us in crypto benchmarks
-      secp256k1_verify_cost: 154 * GAS_PER_US,
+      secp256k1_verify_cost: 154 * GAS_PER_MS,
 
       // ~6920 us in crypto benchmarks
-      groth16_verify_cost: 6920 * GAS_PER_US,
+      groth16_verify_cost: 6920 * GAS_PER_MS,
 
       // ~43 us in crypto benchmarks
-      poseidon_hash_cost: 43 * GAS_PER_US,
+      poseidon_hash_cost: 43 * GAS_PER_MS,
 
       // ~480 ns ~ 0.5 in crypto benchmarks
-      keccak_256_cost: GAS_PER_US / 2,
+      keccak_256_cost: GAS_PER_MS / 2,
 
       // ~968 ns ~ 1 us in crypto benchmarks
-      sha256_cost: GAS_PER_US,
+      sha256_cost: GAS_PER_MS,
 
       // ~920 ns ~ 1 us in crypto benchmarks
-      curve_hash_cost: GAS_PER_US,
+      curve_hash_cost: GAS_PER_MS,
 
       // ~162 us in crypto benchmarks
-      secp256k1_recover_pubkey_cost: 162 * GAS_PER_US,
+      secp256k1_recover_pubkey_cost: 162 * GAS_PER_MS,
       // ~63 us in crypto benchmarks
-      ed25519_verify_cost: 63 * GAS_PER_US,
+      ed25519_verify_cost: 63 * GAS_PER_MS,
       // Gas cost factors, relative to ed25519_verify cost
       // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
-      ed25519_batch_verify_cost: (63 * GAS_PER_US) / 2,
-      ed25519_batch_verify_one_pubkey_cost: (63 * GAS_PER_US) / 4,
+      ed25519_batch_verify_cost: (63 * GAS_PER_MS) / 2,
+      ed25519_batch_verify_one_pubkey_cost: (63 * GAS_PER_MS) / 4,
     };
   }
 

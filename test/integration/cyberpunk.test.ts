@@ -44,7 +44,7 @@ describe('cyberpunk', () => {
   it.skip('execute_argon2', async () => {
     // gas limit not implemented
     // Arrange
-    vm = new VMInstance(backend, 100_000_000_000_000); // TODO: implement gas limit on VM
+    vm = new VMInstance(backend, true, 100_000_000_000_000);
     const initRes = vm.instantiate(mockEnv, mockInfo, {}) as any;
     expect(initRes.messages.length).toStrictEqual(0);
 

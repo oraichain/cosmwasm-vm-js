@@ -49,7 +49,7 @@ export class ZkBackendApi extends BasicBackendApi {
 
 const wasmBytecode = readFileSync('testdata/v1.1/zk.wasm');
 const backend: IBackend = {
-  backend_api: new ZkBackendApi('orai'),
+  backend_api: new ZkBackendApi('terra'),
   storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
@@ -62,12 +62,12 @@ const mockEnv: Env = {
     chain_id: 'Oraichain',
   },
   contract: {
-    address: 'orai1qxd52frq6jnd73nsw49jzp4xccal3g9v47pxwftzqy78ww02p75s62e94t',
+    address: 'terra1qxd52frq6jnd73nsw49jzp4xccal3g9v47pxwftzqy78ww02p75s62e94t',
   },
 };
 
 const mockInfo: MessageInfo = {
-  sender: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
+  sender: 'terra122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj',
   funds: [],
 };
 
@@ -102,7 +102,5 @@ describe('CosmWasmVM', () => {
     const data = (queryRes as { ok: string }).ok;
 
     console.log(JSON.parse(fromAscii(fromBase64(data))));
-
-    console.log('gasUsed', vm.gasUsed);
   });
 });

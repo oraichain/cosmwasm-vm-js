@@ -3,9 +3,13 @@ import bech32 from 'bech32';
 import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
+// @ts-ignore
+import metering from 'wasm-metering';
 import {
   GAS_COST_CANONICALIZE,
   GAS_COST_HUMANIZE,
+  GAS_COST_LAST_ITERATION,
+  GAS_COST_RANGE,
   GasInfo,
   IBackend,
   Record,
@@ -18,7 +22,7 @@ import {
   getOldInfo,
   OldMessageInfo,
 } from './helpers/convert';
-import { Environment } from './environment';
+import { DEFAULT_GAS_LIMIT, Environment } from './environment';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -41,7 +45,8 @@ export class VMInstance {
 
   constructor(
     public backend: IBackend,
-    public readonly gasLimit?: number | undefined
+    public metering: boolean = false,
+    public readonly gasLimit: number = DEFAULT_GAS_LIMIT
   ) {}
 
   public async build(wasmByteCode: ArrayBuffer) {
@@ -73,9 +78,34 @@ export class VMInstance {
       },
     };
 
-    const result = await WebAssembly.instantiate(wasmByteCode, imports);
+    if (this.metering) {
+      const meteredWasm = metering.meterWASM(wasmByteCode);
+      const mod = new WebAssembly.Module(meteredWasm);
+      Object.assign(imports, {
+        metering: {
+          usegas: (gas: number) => {
+            if (this.env) {
+              let gasInfo = GasInfo.with_cost(gas);
+              this.env.process_gas_info(gasInfo);
 
-    for (const methodName in result.instance.exports) {
+              if (this.gasUsed > this.gasLimit) {
+                throw new Error('out of gas!');
+              }
+            }
+          },
+        },
+      });
+      this.instance = new WebAssembly.Instance(mod, imports);
+      // init env
+      this.env = new Environment(this.instance!, this.backend, this.gasLimit);
+    } else {
+      this.instance = new WebAssembly.Instance(
+        new WebAssembly.Module(wasmByteCode),
+        imports
+      );
+    }
+
+    for (const methodName in this.instance!.exports) {
       // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
       if (methodName === 'cosmwasm_vm_version_4') {
         this._version = 4;
@@ -86,9 +116,6 @@ export class VMInstance {
         break;
       }
     }
-    this.instance = result.instance;
-    // init env
-    this.env = new Environment(this.instance, this.backend, this.gasLimit);
   }
 
   public set storageReadonly(value: boolean) {
@@ -106,7 +133,7 @@ export class VMInstance {
   }
 
   public get remainingGas() {
-    return this.gasLimit ? this.gasLimit - this.gasUsed : 0;
+    return this.gasLimit - this.gasUsed;
   }
 
   public allocate(size: number): Region {
@@ -311,6 +338,11 @@ export class VMInstance {
       );
     }
 
+    if (this.env) {
+      let gasInfo = GasInfo.with_externally_used(key.length);
+      this.env.process_gas_info(gasInfo);
+    }
+
     if (value === null) {
       return this.region(0);
     }
@@ -328,10 +360,19 @@ export class VMInstance {
       throw new Error(`db_write: key too large: ${key.str}`);
     }
 
+    if (this.env) {
+      let gasInfo = GasInfo.with_externally_used(key.length + value.length);
+      this.env.process_gas_info(gasInfo);
+    }
+
     this.backend.storage.set(key.data, value.data);
   }
 
   do_db_remove(key: Region) {
+    if (this.env) {
+      let gasInfo = GasInfo.with_externally_used(key.length);
+      this.env.process_gas_info(gasInfo);
+    }
     this.backend.storage.remove(key.data);
   }
 
@@ -341,6 +382,11 @@ export class VMInstance {
       end.data,
       order
     );
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_externally_used(GAS_COST_RANGE);
+      this.env.process_gas_info(gasInfo);
+    }
 
     let region = this.allocate(iteratorId.length);
     region.write(iteratorId);
@@ -352,7 +398,19 @@ export class VMInstance {
     const record: Record | null = this.backend.storage.next(iterator_id.data);
 
     if (record === null) {
+      if (this.env) {
+        let gasInfo = GasInfo.with_externally_used(GAS_COST_LAST_ITERATION);
+        this.env.process_gas_info(gasInfo);
+      }
       return this.allocate_bytes(Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]));
+    }
+
+    // gas cost = key.length + value.length of the item
+    if (this.env) {
+      let gasInfo = GasInfo.with_externally_used(
+        record.key.length + record.value.length
+      );
+      this.env.process_gas_info(gasInfo);
     }
 
     // old version following standard: [value,key,key.length]
@@ -686,8 +744,11 @@ export class VMInstance {
   }
 
   do_query_chain(request: Region): Region {
-    const resultPtr = this.backend.querier.query_raw(request.data, 100000);
-
+    const resultPtr = this.backend.querier.query_raw(
+      request.data,
+      this.remainingGas
+    );
+    // auto update gas on this vm if use contract sharing
     let region = this.allocate(resultPtr.length);
     region.write(resultPtr);
     return region;

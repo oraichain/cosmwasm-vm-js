@@ -50,7 +50,7 @@ export class BasicBackendApi implements IBackendApi {
   public CANONICAL_LENGTH = 54;
   public EXCESS_PADDING = 6;
 
-  constructor(public bech32_prefix: string = 'orai') {}
+  constructor(public bech32_prefix: string = 'terra') {}
 
   poseidon_hash(
     left_input: Uint8Array,

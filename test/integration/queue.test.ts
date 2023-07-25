@@ -38,7 +38,7 @@ describe('queue', () => {
       querier: new BasicQuerier(),
     };
 
-    vm = new VMInstance(backend, 100_000_000_000_000); // TODO: implement gas limit on VM
+    vm = new VMInstance(backend, true, 100_000_000_000_000);
     await vm.build(wasmBytecode);
   });
 
