@@ -1,7 +1,6 @@
 // @ts-nocheck
-import { wasm2json, json2wasm, text2json } from 'warp-wasm-json-toolkit';
-
-const SECTION_IDS = require('warp-wasm-json-toolkit/json2wasm').SECTION_IDS;
+import { wasm2json, json2wasm, text2json } from 'wasm-json-toolkit';
+import { SECTION_IDS } from 'wasm-json-toolkit/json2wasm';
 
 const defaultCostTable = {
   start: 0,
@@ -187,7 +186,7 @@ function meterCodeEntry(entry, costTable, meterFuncIndex, meterType, cost) {
 }
 
 /**
- * Injects metering into a JSON output of [wasm2json](https://github.com/ewasm/warp-wasm-json-toolkit#wasm2json)
+ * Injects metering into a JSON output of [wasm2json](https://github.com/ewasm/wasm-json-toolkit#wasm2json)
  * @param {Object} json the json tobe metered
  * @param {Object} opts
  * @param {Object} [opts.costTable=defaultTable] the cost table to meter with. See these notes about the default.
