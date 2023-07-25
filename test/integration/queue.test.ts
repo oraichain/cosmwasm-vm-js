@@ -38,7 +38,7 @@ describe('queue', () => {
       storage: new BasicKVIterStorage(),
       querier: new BasicQuerier(),
     };
-    const env = new Environment(backend, 100_000_000_000_000);
+    const env = new Environment(backend.backend_api, 100_000_000_000_000);
     vm = new VMInstance(backend, env);
     await vm.build(wasmBytecode);
   });

@@ -1,11 +1,4 @@
-import {
-  GasInfo,
-  IBackend,
-  IBackendApi,
-  IIterStorage,
-  IQuerier,
-  IStorage,
-} from './backend';
+import { GasInfo, IBackendApi } from './backend';
 
 export interface IEnvironment {
   call_function(name: string, args: object[]): object;
@@ -49,32 +42,26 @@ export interface GasState {
 
 export interface ContextData {
   gas_state: GasState;
-  storage: IStorage;
   storage_readonly: boolean;
   // wasmer_instance: any;
 }
 
 export class Environment {
-  public storage: IIterStorage;
-  public querier: IQuerier;
   public backendApi: IBackendApi;
   public data: ContextData;
   public gasConfig: GasConfig;
 
-  constructor(backend: IBackend, gasLimit: number = DEFAULT_GAS_LIMIT) {
+  constructor(backendApi: IBackendApi, gasLimit: number = DEFAULT_GAS_LIMIT) {
     const data: ContextData = {
       gas_state: {
         gas_limit: gasLimit,
         externally_used_gas: 0,
       },
-      storage: backend.storage,
       storage_readonly: false, // allow update
       // wasmer_instance: instance,
     };
 
-    this.storage = backend.storage;
-    this.querier = backend.querier;
-    this.backendApi = backend.backend_api;
+    this.backendApi = backendApi;
     this.data = data;
     this.call_function = this.call_function.bind(this);
     this.gasConfig = {
