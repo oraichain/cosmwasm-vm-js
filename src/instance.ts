@@ -3,7 +3,13 @@ import bech32 from 'bech32';
 import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
-import { IBackend, Record } from './backend';
+import {
+  GAS_COST_CANONICALIZE,
+  GAS_COST_HUMANIZE,
+  GasInfo,
+  IBackend,
+  Record,
+} from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
 import {
@@ -12,6 +18,7 @@ import {
   getOldInfo,
   OldMessageInfo,
 } from './helpers/convert';
+import { Environment, ContextData } from './environment';
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
@@ -27,6 +34,7 @@ export class VMInstance {
   private _version: number = 8;
   public instance?: WebAssembly.Instance;
   public debugMsgs: string[] = [];
+  public env?: Environment;
 
   // override this
   public static eddsa: EllipticEddsa;
@@ -79,6 +87,12 @@ export class VMInstance {
       }
     }
     this.instance = result.instance;
+    // init env
+    this.env = new Environment(this.instance, this.backend, this.gasLimit);
+  }
+
+  public set storageReadonly(value: boolean) {
+    this.env?.set_storage_readonly(value);
   }
 
   public get exports(): any {
@@ -87,8 +101,12 @@ export class VMInstance {
     return this.instance!.exports;
   }
 
+  public get gasUsed() {
+    return this.env?.data.gas_state.externally_used_gas ?? 0;
+  }
+
   public get remainingGas() {
-    return this.gasLimit; // TODO: implement
+    return this.gasLimit ? this.gasLimit - this.gasUsed : 0;
   }
 
   public allocate(size: number): Region {
@@ -127,109 +145,6 @@ export class VMInstance {
 
   public get version(): number {
     return this._version;
-  }
-
-  public instantiate(env: Env, info: MessageInfo, msg: object): object {
-    let instantiate = this.exports[this.version === 4 ? 'init' : 'instantiate'];
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let infoArg = this.version === 4 ? getOldInfo(info) : info;
-    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
-    let result = instantiate(...args);
-    let { json } = this.region(result);
-    if (this.version < 6) {
-      return getNewResponse(json);
-    }
-    return json;
-  }
-
-  public execute(env: Env, info: MessageInfo, msg: object): object {
-    let execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let infoArg = this.version === 4 ? getOldInfo(info) : info;
-    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
-    let result = execute(...args);
-    let { json } = this.region(result);
-    if (this.version < 6) {
-      return getNewResponse(json);
-    }
-    return json;
-  }
-
-  public query(env: Env, msg: object): object {
-    let { query } = this.exports;
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
-    let result = query(...args);
-    return this.region(result).json;
-  }
-
-  public migrate(env: Env, msg: object): object {
-    let { migrate } = this.exports;
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
-    if (this.version === 4) {
-      const infoArg: OldMessageInfo = {
-        sender: '',
-        sent_funds: [],
-      };
-      args.splice(1, 0, this.allocate_json(infoArg).ptr);
-    }
-    let result = migrate(...args);
-    let { json } = this.region(result);
-    if (this.version < 6) {
-      return getNewResponse(json);
-    }
-    return json;
-  }
-
-  public reply(env: Env, msg: object): object {
-    let { reply } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = reply(...args);
-    return this.region(result).json;
-  }
-
-  // IBC implementation
-  public ibc_channel_open(env: Env, msg: object): object {
-    let { ibc_channel_open } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = ibc_channel_open(...args);
-    return this.region(result).json;
-  }
-
-  public ibc_channel_connect(env: Env, msg: object): object {
-    let { ibc_channel_connect } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = ibc_channel_connect(...args);
-    return this.region(result).json;
-  }
-
-  public ibc_channel_close(env: Env, msg: object): object {
-    let { ibc_channel_close } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = ibc_channel_close(...args);
-    return this.region(result).json;
-  }
-
-  public ibc_packet_receive(env: Env, msg: object): object {
-    let { ibc_packet_receive } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = ibc_packet_receive(...args);
-    return this.region(result).json;
-  }
-
-  public ibc_packet_ack(env: Env, msg: object): object {
-    let { ibc_packet_ack } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = ibc_packet_ack(...args);
-    return this.region(result).json;
-  }
-
-  public ibc_packet_timeout(env: Env, msg: object): object {
-    let { ibc_packet_timeout } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
-    let result = ibc_packet_timeout(...args);
-    return this.region(result).json;
   }
 
   db_read(key_ptr: number): number {
@@ -471,7 +386,11 @@ export class VMInstance {
 
     destination.write_str(result);
 
-    // TODO: add error handling; -- 0 = success, anything else is a pointer to an error message
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(GAS_COST_HUMANIZE);
+      this.env.process_gas_info(gasInfo);
+    }
+
     return new Region(this.exports.memory, 0);
   }
 
@@ -485,6 +404,11 @@ export class VMInstance {
     let result = this.backend.backend_api.canonical_address(source_data);
 
     destination.write(result);
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
+      this.env.process_gas_info(gasInfo);
+    }
 
     return new Region(this.exports.memory, 0);
   }
@@ -508,6 +432,12 @@ export class VMInstance {
       this.backend.backend_api.bech32_prefix,
       bech32.toWords(canonical)
     );
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
+      this.env.process_gas_info(gasInfo);
+    }
+
     if (human !== source.str) {
       throw new Error('Invalid address.');
     }
@@ -522,6 +452,11 @@ export class VMInstance {
       hash.data,
       pubkey.data
     );
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.secp256k1_verify_cost);
+      this.env.process_gas_info(gasInfo);
+    }
 
     if (isValidSignature) {
       return 0;
@@ -541,6 +476,14 @@ export class VMInstance {
       msgHash.data,
       false
     );
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(
+        this.env.gasConfig.secp256k1_recover_pubkey_cost
+      );
+      this.env.process_gas_info(gasInfo);
+    }
+
     return this.allocate_bytes(pub);
   }
 
@@ -562,6 +505,11 @@ export class VMInstance {
     const _pubkey = VMInstance.eddsa.keyFromPublic(pub);
 
     const isValidSignature = VMInstance.eddsa.verify(msg, _signature, _pubkey);
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.ed25519_verify_cost);
+      this.env.process_gas_info(gasInfo);
+    }
 
     if (isValidSignature) {
       return 0;
@@ -620,6 +568,13 @@ export class VMInstance {
       );
     }
 
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(
+        this.env.gasConfig.ed25519_batch_verify_cost
+      );
+      this.env.process_gas_info(gasInfo);
+    }
+
     for (let i = 0; i < messages.length; i++) {
       const message = Buffer.from(messages[i]).toString('hex');
       const signature = Buffer.from(signatures[i]).toString('hex');
@@ -648,6 +603,11 @@ export class VMInstance {
     let result = this.backend.backend_api.curve_hash(input.data, curve);
     destination.write(result);
 
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.curve_hash_cost);
+      this.env.process_gas_info(gasInfo);
+    }
+
     return new Region(this.exports.memory, 0);
   }
 
@@ -655,12 +615,22 @@ export class VMInstance {
     let result = this.backend.backend_api.keccak_256(input.data);
     destination.write(result);
 
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.keccak_256_cost);
+      this.env.process_gas_info(gasInfo);
+    }
+
     return new Region(this.exports.memory, 0);
   }
 
   do_sha256(input: Region, destination: Region): Region {
     let result = this.backend.backend_api.sha256(input.data);
     destination.write(result);
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.sha256_cost);
+      this.env.process_gas_info(gasInfo);
+    }
 
     return new Region(this.exports.memory, 0);
   }
@@ -678,6 +648,11 @@ export class VMInstance {
     );
     destination.write(result);
 
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.poseidon_hash_cost);
+      this.env.process_gas_info(gasInfo);
+    }
+
     return new Region(this.exports.memory, 0);
   }
 
@@ -693,6 +668,11 @@ export class VMInstance {
       vk.data,
       curve
     );
+
+    if (this.env) {
+      let gasInfo = GasInfo.with_cost(this.env.gasConfig.groth16_verify_cost);
+      this.env.process_gas_info(gasInfo);
+    }
 
     if (isValidProof) {
       return 0;
@@ -715,6 +695,121 @@ export class VMInstance {
 
   do_abort(message: Region) {
     throw new Error(`abort: ${message.read_str()}`);
+  }
+
+  // entrypoints
+  public instantiate(env: Env, info: MessageInfo, msg: object): object {
+    let instantiate = this.exports[this.version === 4 ? 'init' : 'instantiate'];
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let infoArg = this.version === 4 ? getOldInfo(info) : info;
+    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = instantiate(...args);
+    let { json } = this.region(result);
+    if (this.version < 6) {
+      return getNewResponse(json);
+    }
+    return json;
+  }
+
+  public execute(env: Env, info: MessageInfo, msg: object): object {
+    let execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let infoArg = this.version === 4 ? getOldInfo(info) : info;
+    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = execute(...args);
+    let { json } = this.region(result);
+    if (this.version < 6) {
+      return getNewResponse(json);
+    }
+    return json;
+  }
+
+  public query(env: Env, msg: object): object {
+    let { query } = this.exports;
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = true;
+    let result = query(...args);
+    return this.region(result).json;
+  }
+
+  public migrate(env: Env, msg: object): object {
+    let { migrate } = this.exports;
+    let envArg = this.version === 4 ? getOldEnv(env) : env;
+    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
+    if (this.version === 4) {
+      const infoArg: OldMessageInfo = {
+        sender: '',
+        sent_funds: [],
+      };
+      args.splice(1, 0, this.allocate_json(infoArg).ptr);
+    }
+    this.storageReadonly = false;
+    let result = migrate(...args);
+    let { json } = this.region(result);
+    if (this.version < 6) {
+      return getNewResponse(json);
+    }
+    return json;
+  }
+
+  public reply(env: Env, msg: object): object {
+    let { reply } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = reply(...args);
+    return this.region(result).json;
+  }
+
+  // IBC implementation
+  public ibc_channel_open(env: Env, msg: object): object {
+    let { ibc_channel_open } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = ibc_channel_open(...args);
+    return this.region(result).json;
+  }
+
+  public ibc_channel_connect(env: Env, msg: object): object {
+    let { ibc_channel_connect } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = ibc_channel_connect(...args);
+    return this.region(result).json;
+  }
+
+  public ibc_channel_close(env: Env, msg: object): object {
+    let { ibc_channel_close } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = ibc_channel_close(...args);
+    return this.region(result).json;
+  }
+
+  public ibc_packet_receive(env: Env, msg: object): object {
+    let { ibc_packet_receive } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = ibc_packet_receive(...args);
+    return this.region(result).json;
+  }
+
+  public ibc_packet_ack(env: Env, msg: object): object {
+    let { ibc_packet_ack } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = ibc_packet_ack(...args);
+    return this.region(result).json;
+  }
+
+  public ibc_packet_timeout(env: Env, msg: object): object {
+    let { ibc_packet_timeout } = this.exports;
+    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    let result = ibc_packet_timeout(...args);
+    return this.region(result).json;
   }
 }
 

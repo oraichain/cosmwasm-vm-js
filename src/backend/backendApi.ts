@@ -1,29 +1,24 @@
 import { fromBech32, normalizeBech32 } from '@cosmjs/encoding';
 import bech32 from 'bech32';
+import { Environment } from 'environment';
 
 export interface IGasInfo {
   cost: number;
   externally_used: number;
-
-  with_cost(cost: number): IGasInfo;
-
-  with_externally_used(externally_used: number): IGasInfo;
-
-  free(): IGasInfo;
 }
 
 export class GasInfo implements IGasInfo {
   constructor(public cost: number, public externally_used: number) {}
 
-  with_cost(cost: number): IGasInfo {
+  static with_cost(cost: number): IGasInfo {
     return new GasInfo(cost, 0);
   }
 
-  with_externally_used(externally_used: number): IGasInfo {
+  static with_externally_used(externally_used: number): IGasInfo {
     return new GasInfo(0, externally_used);
   }
 
-  free(): IGasInfo {
+  static free(): IGasInfo {
     return new GasInfo(0, 0);
   }
 }
@@ -48,11 +43,14 @@ export interface IBackendApi {
   sha256(input: Uint8Array): Uint8Array;
 }
 
+export const GAS_COST_HUMANIZE = 44;
+export const GAS_COST_CANONICALIZE = 55;
+
 export class BasicBackendApi implements IBackendApi {
-  // public GAS_COST_CANONICALIZE = 55;
   public CANONICAL_LENGTH = 54;
   public EXCESS_PADDING = 6;
-  constructor(public bech32_prefix: string = 'terra') {}
+
+  constructor(public bech32_prefix: string = 'orai') {}
 
   poseidon_hash(
     left_input: Uint8Array,
