@@ -14,8 +14,8 @@ const backend: IBackend = {
   storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
-const env = new Environment(backend.backend_api);
-const vm = new VMInstance(backend, env);
+
+const vm = new VMInstance(backend);
 const mockEnv = {
   block: {
     height: 1337,
