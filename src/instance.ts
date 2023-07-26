@@ -3,7 +3,6 @@ import bech32 from 'bech32';
 import { eddsa as EllipticEddsa } from 'elliptic';
 import { Region } from './memory';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
-// @ts-ignore
 import { metering } from '@oraichain/wasm-json-toolkit';
 import {
   GAS_COST_CANONICALIZE,
