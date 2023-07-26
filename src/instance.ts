@@ -23,6 +23,8 @@ import {
 } from './helpers/convert';
 import { Environment } from './environment';
 
+export const GAS_PER_COST = 100;
+
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
 export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
@@ -78,7 +80,7 @@ export class VMInstance {
       Object.assign(imports, {
         metering: {
           usegas: (gas: number) => {
-            let gasInfo = GasInfo.with_cost(gas);
+            let gasInfo = GasInfo.with_cost(gas / GAS_PER_COST);
             this.env!.process_gas_info(gasInfo);
 
             if (this.gasUsed > this.gasLimit) {
