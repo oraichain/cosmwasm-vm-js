@@ -138,7 +138,7 @@ describe('Old CosmWasmVM', () => {
     );
 
     await vm.build(readFileSync(`testdata/v0.13/oraichain_nft.wasm`));
-    const currentGasUsed = vm.gasUsed;
+    let currentGasUsed = vm.gasUsed;
     const instantiateRes = vm.instantiate(mockEnv, mockInfo, {
       name: 'name',
       version: 'version',
@@ -147,7 +147,7 @@ describe('Old CosmWasmVM', () => {
     });
     console.log('gasUsed', vm.gasUsed - currentGasUsed);
     expect('ok' in instantiateRes).toBeTruthy();
-
+    currentGasUsed = vm.gasUsed;
     vm.execute(mockEnv, mockInfo, {
       mint: {
         token_id: 'token_id1',
@@ -157,6 +157,7 @@ describe('Old CosmWasmVM', () => {
         image: 'image1',
       },
     });
+    console.log('gasUsed', vm.gasUsed - currentGasUsed);
 
     let queryRes = vm.query(mockEnv, { contract_info: {} }) as { ok: any };
     expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
