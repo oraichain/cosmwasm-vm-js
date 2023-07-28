@@ -1,9 +1,11 @@
 /*eslint-disable prefer-const */
 import bech32 from 'bech32';
 import { eddsa as EllipticEddsa } from 'elliptic';
-import { Region } from './memory';
+import { toHex } from '@cosmjs/encoding';
+import { sha256 } from '@cosmjs/crypto';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { metering } from '@oraichain/wasm-json-toolkit';
+import { Region } from './memory';
 import {
   GAS_COST_CANONICALIZE,
   GAS_COST_HUMANIZE,
@@ -40,10 +42,12 @@ export class VMInstance {
 
   // override this
   public static eddsa: EllipticEddsa;
+  private static wasmMeteringCache = new Map();
 
   constructor(public backend: IBackend, public readonly env?: Environment) {}
 
-  public async build(wasmByteCode: ArrayBuffer) {
+  // checksum can be used to validate wasmByteCode
+  public async build(wasmByteCode: Uint8Array, checksum?: string) {
     let imports = {
       env: {
         db_read: this.db_read.bind(this),
@@ -73,7 +77,17 @@ export class VMInstance {
     };
 
     if (this.env) {
-      const meteredWasm = metering.meterWASM(wasmByteCode);
+      // check cached first
+      if (checksum === undefined) {
+        checksum = toHex(sha256(wasmByteCode));
+      }
+      if (!VMInstance.wasmMeteringCache.has(checksum)) {
+        VMInstance.wasmMeteringCache.set(
+          checksum,
+          metering.meterWASM(wasmByteCode)
+        );
+      }
+      const meteredWasm = VMInstance.wasmMeteringCache.get(checksum);
       const mod = new WebAssembly.Module(meteredWasm);
       Object.assign(imports, {
         metering: {
