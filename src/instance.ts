@@ -79,7 +79,7 @@ export class VMInstance {
         metering: {
           usegas: (gas: number) => {
             let gasInfo = GasInfo.with_cost(gas * GAS_PER_OP);
-            this.env!.process_gas_info(gasInfo);
+            this.env!.processGasInfo(gasInfo);
 
             if (this.gasUsed > this.gasLimit) {
               throw new Error('out of gas!');
@@ -109,7 +109,7 @@ export class VMInstance {
   }
 
   public set storageReadonly(value: boolean) {
-    this.env?.set_storage_readonly(value);
+    if (this.env) this.env.storageReadonly = value;
   }
 
   public get exports(): any {
@@ -334,7 +334,7 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_externally_used(key.length);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     if (value === null) {
@@ -356,7 +356,7 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_externally_used(key.length + value.length);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     this.backend.storage.set(key.data, value.data);
@@ -365,7 +365,7 @@ export class VMInstance {
   do_db_remove(key: Region) {
     if (this.env) {
       let gasInfo = GasInfo.with_externally_used(key.length);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
     this.backend.storage.remove(key.data);
   }
@@ -379,7 +379,7 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_externally_used(GAS_COST_RANGE);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     let region = this.allocate(iteratorId.length);
@@ -394,7 +394,7 @@ export class VMInstance {
     if (record === null) {
       if (this.env) {
         let gasInfo = GasInfo.with_externally_used(GAS_COST_LAST_ITERATION);
-        this.env.process_gas_info(gasInfo);
+        this.env.processGasInfo(gasInfo);
       }
       return this.allocate_bytes(Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]));
     }
@@ -404,7 +404,7 @@ export class VMInstance {
       let gasInfo = GasInfo.with_externally_used(
         record.key.length + record.value.length
       );
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     // old version following standard: [value,key,key.length]
@@ -440,7 +440,7 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_cost(GAS_COST_HUMANIZE);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     return new Region(this.exports.memory, 0);
@@ -459,7 +459,7 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     return new Region(this.exports.memory, 0);
@@ -487,7 +487,7 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     if (human !== source.str) {
@@ -506,8 +506,10 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.secp256k1_verify_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(
+        Environment.gasConfig.secp256k1_verify_cost
+      );
+      this.env.processGasInfo(gasInfo);
     }
 
     if (isValidSignature) {
@@ -531,9 +533,9 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_cost(
-        this.env.gasConfig.secp256k1_recover_pubkey_cost
+        Environment.gasConfig.secp256k1_recover_pubkey_cost
       );
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     return this.allocate_bytes(pub);
@@ -559,8 +561,10 @@ export class VMInstance {
     const isValidSignature = VMInstance.eddsa.verify(msg, _signature, _pubkey);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.ed25519_verify_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(
+        Environment.gasConfig.ed25519_verify_cost
+      );
+      this.env.processGasInfo(gasInfo);
     }
 
     if (isValidSignature) {
@@ -622,9 +626,9 @@ export class VMInstance {
 
     if (this.env) {
       let gasInfo = GasInfo.with_cost(
-        this.env.gasConfig.ed25519_batch_verify_cost
+        Environment.gasConfig.ed25519_batch_verify_cost
       );
-      this.env.process_gas_info(gasInfo);
+      this.env.processGasInfo(gasInfo);
     }
 
     for (let i = 0; i < messages.length; i++) {
@@ -656,8 +660,8 @@ export class VMInstance {
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.curve_hash_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(Environment.gasConfig.curve_hash_cost);
+      this.env.processGasInfo(gasInfo);
     }
 
     return new Region(this.exports.memory, 0);
@@ -668,8 +672,8 @@ export class VMInstance {
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.keccak_256_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(Environment.gasConfig.keccak_256_cost);
+      this.env.processGasInfo(gasInfo);
     }
 
     return new Region(this.exports.memory, 0);
@@ -680,8 +684,8 @@ export class VMInstance {
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.sha256_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(Environment.gasConfig.sha256_cost);
+      this.env.processGasInfo(gasInfo);
     }
 
     return new Region(this.exports.memory, 0);
@@ -701,8 +705,8 @@ export class VMInstance {
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.poseidon_hash_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(Environment.gasConfig.poseidon_hash_cost);
+      this.env.processGasInfo(gasInfo);
     }
 
     return new Region(this.exports.memory, 0);
@@ -722,8 +726,10 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(this.env.gasConfig.groth16_verify_cost);
-      this.env.process_gas_info(gasInfo);
+      let gasInfo = GasInfo.with_cost(
+        Environment.gasConfig.groth16_verify_cost
+      );
+      this.env.processGasInfo(gasInfo);
     }
 
     if (isValidProof) {
