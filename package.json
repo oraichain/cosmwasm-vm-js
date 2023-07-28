@@ -73,7 +73,7 @@
     "@cosmjs/crypto": "^0.29.5",
     "@cosmjs/encoding": "^0.29.5",
     "@oraichain/cosmwasm-vm-zk-nodejs": "^0.0.7",
-    "@oraichain/wasm-json-toolkit": "^1.0.17",
+    "@oraichain/wasm-json-toolkit": "^1.0.18",
     "bech32": "1.1.4",
     "elliptic": "^6.5.4",
     "immutable": "^4.1.0",
