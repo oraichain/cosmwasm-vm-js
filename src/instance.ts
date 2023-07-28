@@ -107,14 +107,15 @@ export class VMInstance {
       mod = await WebAssembly.compile(wasmByteCode);
     }
 
+    // init wasm instance
     this.instance = await WebAssembly.instantiate(mod, imports);
+
     for (const methodName in this.instance.exports) {
       // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
       if (methodName === 'cosmwasm_vm_version_4') {
         this._version = 4;
         break;
-      }
-      if (methodName.startsWith('interface_version_')) {
+      } else if (methodName.startsWith('interface_version_')) {
         this._version = Number(methodName.substring(18));
         break;
       }
