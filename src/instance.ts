@@ -75,20 +75,9 @@ export class VMInstance {
         humanize_address: this.do_addr_humanize.bind(this),
       },
     };
+    let mod: WebAssembly.Module;
 
     if (this.env) {
-      // check cached first
-      if (checksum === undefined) {
-        checksum = toHex(sha256(wasmByteCode));
-      }
-      if (!VMInstance.wasmMeteringCache.has(checksum)) {
-        VMInstance.wasmMeteringCache.set(
-          checksum,
-          metering.meterWASM(wasmByteCode)
-        );
-      }
-      const meteredWasm = VMInstance.wasmMeteringCache.get(checksum);
-      const mod = await WebAssembly.compile(meteredWasm);
       Object.assign(imports, {
         metering: {
           usegas: (gas: number) => {
@@ -101,13 +90,25 @@ export class VMInstance {
           },
         },
       });
-      this.instance = new WebAssembly.Instance(mod, imports);
+
+      // check cached first
+      if (checksum === undefined) {
+        checksum = toHex(sha256(wasmByteCode));
+      }
+      if (!VMInstance.wasmMeteringCache.has(checksum)) {
+        VMInstance.wasmMeteringCache.set(
+          checksum,
+          metering.meterWASM(wasmByteCode)
+        );
+      }
+      const meteredWasm = VMInstance.wasmMeteringCache.get(checksum);
+      mod = await WebAssembly.compile(meteredWasm);
     } else {
-      const mod = await WebAssembly.compile(wasmByteCode);
-      this.instance = new WebAssembly.Instance(mod, imports);
+      mod = await WebAssembly.compile(wasmByteCode);
     }
 
-    for (const methodName in this.instance!.exports) {
+    this.instance = await WebAssembly.instantiate(mod, imports);
+    for (const methodName in this.instance.exports) {
       // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
       if (methodName === 'cosmwasm_vm_version_4') {
         this._version = 4;
