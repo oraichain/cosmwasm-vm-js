@@ -48,7 +48,7 @@ export class VMInstance {
 
   // checksum can be used to validate wasmByteCode
   public async build(wasmByteCode: Uint8Array, checksum?: string) {
-    let imports = {
+    const imports = {
       env: {
         db_read: this.db_read.bind(this),
         db_write: this.db_write.bind(this),
@@ -88,7 +88,7 @@ export class VMInstance {
         );
       }
       const meteredWasm = VMInstance.wasmMeteringCache.get(checksum);
-      const mod = new WebAssembly.Module(meteredWasm);
+      const mod = await WebAssembly.compile(meteredWasm);
       Object.assign(imports, {
         metering: {
           usegas: (gas: number) => {
@@ -103,10 +103,8 @@ export class VMInstance {
       });
       this.instance = new WebAssembly.Instance(mod, imports);
     } else {
-      this.instance = new WebAssembly.Instance(
-        new WebAssembly.Module(wasmByteCode),
-        imports
-      );
+      const mod = await WebAssembly.compile(wasmByteCode);
+      this.instance = new WebAssembly.Instance(mod, imports);
     }
 
     for (const methodName in this.instance!.exports) {
