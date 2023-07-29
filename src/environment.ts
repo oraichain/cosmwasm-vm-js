@@ -5,7 +5,7 @@ export interface IEnvironment {
 }
 
 export const GAS_PER_OP = 150_000;
-export const GAS_MULTIPLIER = 1_400_000; // convert to chain gas
+export const GAS_MULTIPLIER = 14_000_000; // convert to chain gas
 export const GAS_PER_US = 1_000_000_000;
 
 export const DEFAULT_GAS_LIMIT = 1_000_000_000_000; // ~1ms
