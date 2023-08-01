@@ -5,10 +5,7 @@ import { fromHex } from '@cosmjs/encoding';
  *
  * @returns {number} bytes1 < bytes2 --> -1; bytes1 == bytes2 --> 0; bytes1 > bytes2 --> 1
  */
- export function compare(
-  bytes1: Uint8Array,
-  bytes2: Uint8Array
-): number {
+export function compare(bytes1: Uint8Array, bytes2: Uint8Array): number {
   const length = Math.max(bytes1.length, bytes2.length);
   for (let i = 0; i < length; i++) {
     if (bytes1.length < i) return -1;
@@ -24,12 +21,15 @@ import { fromHex } from '@cosmjs/encoding';
 export function toNumber(bigEndianByteArray: Uint8Array | number[]) {
   let value = 0;
   for (let i = 0; i < bigEndianByteArray.length; i++) {
-      value = (value * 256) + bigEndianByteArray[i];
+    value = value * 256 + bigEndianByteArray[i];
   }
   return value;
 }
 
-export function toByteArray(number: number, fixedLength?: number | undefined): Uint8Array {
+export function toByteArray(
+  number: number,
+  fixedLength?: number | undefined
+): Uint8Array {
   let hex = number.toString(16);
   if (hex.length % 2 === 1) {
     hex = `0${hex}`;
@@ -37,14 +37,11 @@ export function toByteArray(number: number, fixedLength?: number | undefined): U
 
   const bytesOriginal = fromHex(hex);
 
-  if (!fixedLength) {
-    return new Uint8Array([...bytesOriginal]);
+  if (fixedLength && fixedLength > bytesOriginal.length) {
+    const bytesFixedLength = new Uint8Array(fixedLength);
+    bytesFixedLength.set(bytesOriginal, fixedLength - bytesOriginal.length);
+    return bytesFixedLength;
   }
 
-  let bytesFixedLength = [...bytesOriginal];
-  for (let i = 0; i < fixedLength - bytesOriginal.length; i++) {
-    bytesFixedLength = [0, ...bytesFixedLength];
-  }
-
-  return new Uint8Array(bytesFixedLength);
+  return bytesOriginal;
 }

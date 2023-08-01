@@ -88,14 +88,13 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
 
   all(iterator_id: Uint8Array): Array<Record> {
     const out: Array<Record> = [];
-    let condition = true;
-    while (condition) {
+
+    while (true) {
       const record = this.next(iterator_id);
       if (record === null) {
-        condition = false;
-      } else {
-        out.push(record);
+        break;
       }
+      out.push(record);
     }
     return out;
   }
@@ -127,14 +126,16 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
     if (!(order in Order)) {
       throw new Error(`Invalid order value ${order}.`);
     }
+    const hasStart = start?.length;
+    const hasEnd = end?.length;
 
     // if there is end namespace
-    const filterKeyLength = end?.length && end[0] == 0 ? end[1] : 0;
+    const filterKeyLength = hasEnd && end[0] == 0 ? end[1] : 0;
 
     const newId = this.iterators.size + 1;
 
     // if start > end, this represents an empty range
-    if (start?.length && end?.length && compare(start, end) === 1) {
+    if (hasStart && hasEnd && compare(start, end) === 1) {
       this.iterators.set(newId, { data: [], position: 0 });
       return toByteArray(newId);
     }
@@ -144,7 +145,7 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
       let keyArr = fromBase64(key);
 
       // start of search just 1 item
-      if (start?.length && compare(start, keyArr) === 1) continue;
+      if (hasStart && compare(start, keyArr) === 1) continue;
 
       // different namespace
       if (filterKeyLength && keyArr[0] === 0 && filterKeyLength != keyArr[1]) {
@@ -152,13 +153,13 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
       }
 
       // end of search
-      if (end?.length && compare(keyArr, end) > -1) break;
+      if (hasEnd && compare(keyArr, end) > -1) break;
 
       data.push({ key: keyArr, value: this.get(keyArr)! });
     }
 
     if (order === Order.Descending) {
-      data = data.reverse();
+      data.reverse();
     }
 
     this.iterators.set(newId, { data, position: 0 });
