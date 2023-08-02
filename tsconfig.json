@@ -15,9 +15,7 @@
     "declaration": true,
     "esModuleInterop": true,
     "lib": [
-      "es2015",
-      "es2016",
-      "es2017",
+      "ESNext",
       "dom"
     ],
     "module": "commonjs",
@@ -37,7 +35,7 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "target": "es6",
+    "target": "ESNext",
     "paths": {
       "*": [
         "src/*"
