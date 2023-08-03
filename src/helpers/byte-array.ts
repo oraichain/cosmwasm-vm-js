@@ -1,5 +1,3 @@
-import { fromHex } from '@cosmjs/encoding';
-
 /**
  * Compares two byte arrays using the same logic as strcmp()
  *
@@ -26,22 +24,13 @@ export function toNumber(bigEndianByteArray: Uint8Array | number[]) {
   return value;
 }
 
-export function toByteArray(
-  number: number,
-  fixedLength?: number | undefined
-): Uint8Array {
-  let hex = number.toString(16);
-  if (hex.length % 2 === 1) {
-    hex = `0${hex}`;
+export function toByteArray(number: number, fixedLength?: number) {
+  // log2(1) == 0, ceil(0) = 0
+  let byteLength = fixedLength ?? (Math.ceil(Math.log2(number) / 8) || 1);
+  const bytes = new Uint8Array(byteLength);
+  while (number > 0) {
+    bytes[--byteLength] = number & 0b11111111;
+    number >>= 8;
   }
-
-  const bytesOriginal = fromHex(hex);
-
-  if (fixedLength && fixedLength > bytesOriginal.length) {
-    const bytesFixedLength = new Uint8Array(fixedLength);
-    bytesFixedLength.set(bytesOriginal, fixedLength - bytesOriginal.length);
-    return bytesFixedLength;
-  }
-
-  return bytesOriginal;
+  return bytes;
 }
