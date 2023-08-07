@@ -1,6 +1,6 @@
 /*eslint-disable prefer-const */
 import bech32 from 'bech32';
-import { eddsa as EllipticEddsa } from 'elliptic';
+import { eddsa } from 'elliptic';
 import { toHex } from '@cosmjs/encoding';
 import { sha256 } from '@cosmjs/crypto';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
@@ -41,7 +41,7 @@ export class VMInstance {
   public debugMsgs: string[] = [];
 
   // override this
-  public static eddsa: EllipticEddsa;
+  public static eddsa = new eddsa('ed25519');
   private static wasmMeteringCache = new Map();
 
   constructor(public backend: IBackend, public readonly env?: Environment) {}
@@ -81,7 +81,7 @@ export class VMInstance {
       Object.assign(imports, {
         metering: {
           usegas: (gas: number) => {
-            let gasInfo = GasInfo.with_cost(gas * GAS_PER_OP);
+            const gasInfo = GasInfo.with_cost(gas * GAS_PER_OP);
             this.env!.processGasInfo(gasInfo);
 
             if (this.gasUsed > this.gasLimit) {
@@ -145,37 +145,36 @@ export class VMInstance {
   }
 
   public allocate(size: number): Region {
-    let { allocate, memory } = this.exports;
-    let regPtr = allocate(size);
+    const { allocate, memory } = this.exports;
+    const regPtr = allocate(size);
     return new Region(memory, regPtr);
   }
 
   public deallocate(region: Region): void {
-    let { deallocate } = this.exports;
+    const { deallocate } = this.exports;
     deallocate(region.ptr);
   }
 
   public allocate_bytes(bytes: Uint8Array): Region {
-    let region = this.allocate(bytes.length);
+    const region = this.allocate(bytes.length);
     region.write(bytes);
     return region;
   }
 
   public allocate_b64(b64: string): Region {
-    let bytes = Buffer.from(b64, 'base64');
+    const bytes = Buffer.from(b64, 'base64');
     return this.allocate_bytes(bytes);
   }
 
   public allocate_str(str: string): Region {
-    let region = this.allocate(str.length);
+    const region = this.allocate(str.length);
     region.write_str(str);
     return region;
   }
 
   public allocate_json(obj: object): Region {
-    let region = this.allocate(JSON.stringify(obj).length);
-    region.write_json(obj);
-    return region;
+    const str = JSON.stringify(obj);
+    return this.allocate_str(str);
   }
 
   public get version(): number {
@@ -183,46 +182,46 @@ export class VMInstance {
   }
 
   db_read(key_ptr: number): number {
-    let key = this.region(key_ptr);
+    const key = this.region(key_ptr);
     return this.do_db_read(key).ptr;
   }
 
   db_write(key_ptr: number, value_ptr: number) {
-    let key = this.region(key_ptr);
-    let value = this.region(value_ptr);
+    const key = this.region(key_ptr);
+    const value = this.region(value_ptr);
     this.do_db_write(key, value);
   }
 
   db_remove(key_ptr: number) {
-    let key = this.region(key_ptr);
+    const key = this.region(key_ptr);
     this.do_db_remove(key);
   }
 
   db_scan(start_ptr: number, end_ptr: number, order: number): number {
-    let start = this.region(start_ptr);
-    let end = this.region(end_ptr);
+    const start = this.region(start_ptr);
+    const end = this.region(end_ptr);
     return this.do_db_scan(start, end, order).ptr;
   }
 
   db_next(iterator_id_ptr: number): number {
-    let iterator_id = this.region(iterator_id_ptr);
+    const iterator_id = this.region(iterator_id_ptr);
     return this.do_db_next(iterator_id).ptr;
   }
 
   addr_canonicalize(source_ptr: number, destination_ptr: number): number {
-    let source = this.region(source_ptr);
-    let destination = this.region(destination_ptr);
+    const source = this.region(source_ptr);
+    const destination = this.region(destination_ptr);
     return this.do_addr_canonicalize(source, destination).ptr;
   }
 
   addr_humanize(source_ptr: number, destination_ptr: number): number {
-    let source = this.region(source_ptr);
-    let destination = this.region(destination_ptr);
+    const source = this.region(source_ptr);
+    const destination = this.region(destination_ptr);
     return this.do_addr_humanize(source, destination).ptr;
   }
 
   addr_validate(source_ptr: number): number {
-    let source = this.region(source_ptr);
+    const source = this.region(source_ptr);
     return this.do_addr_validate(source).ptr;
   }
 
@@ -231,9 +230,9 @@ export class VMInstance {
     signature_ptr: number,
     pubkey_ptr: number
   ): number {
-    let hash = this.region(hash_ptr);
-    let signature = this.region(signature_ptr);
-    let pubkey = this.region(pubkey_ptr);
+    const hash = this.region(hash_ptr);
+    const signature = this.region(signature_ptr);
+    const pubkey = this.region(pubkey_ptr);
     return this.do_secp256k1_verify(hash, signature, pubkey);
   }
 
@@ -242,8 +241,8 @@ export class VMInstance {
     signature_ptr: number,
     recover_param: number
   ): bigint {
-    let hash = this.region(hash_ptr);
-    let signature = this.region(signature_ptr);
+    const hash = this.region(hash_ptr);
+    const signature = this.region(signature_ptr);
     return BigInt(
       this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr
     );
@@ -254,9 +253,9 @@ export class VMInstance {
     signature_ptr: number,
     pubkey_ptr: number
   ): number {
-    let message = this.region(message_ptr);
-    let signature = this.region(signature_ptr);
-    let pubkey = this.region(pubkey_ptr);
+    const message = this.region(message_ptr);
+    const signature = this.region(signature_ptr);
+    const pubkey = this.region(pubkey_ptr);
     return this.do_ed25519_verify(message, signature, pubkey);
   }
 
@@ -265,9 +264,9 @@ export class VMInstance {
     signatures_ptr: number,
     public_keys_ptr: number
   ): number {
-    let messages = this.region(messages_ptr);
-    let signatures = this.region(signatures_ptr);
-    let public_keys = this.region(public_keys_ptr);
+    const messages = this.region(messages_ptr);
+    const signatures = this.region(signatures_ptr);
+    const public_keys = this.region(public_keys_ptr);
     return this.do_ed25519_batch_verify(messages, signatures, public_keys);
   }
 
@@ -276,8 +275,8 @@ export class VMInstance {
     curve: number,
     destination_ptr: number
   ): number {
-    let input = this.region(input_ptr);
-    let destination = this.region(destination_ptr);
+    const input = this.region(input_ptr);
+    const destination = this.region(destination_ptr);
     return this.do_curve_hash(input, curve, destination).ptr;
   }
 
@@ -287,9 +286,9 @@ export class VMInstance {
     curve: number,
     destination_ptr: number
   ): number {
-    let left_input = this.region(left_input_ptr);
-    let right_input = this.region(right_input_ptr);
-    let destination = this.region(destination_ptr);
+    const left_input = this.region(left_input_ptr);
+    const right_input = this.region(right_input_ptr);
+    const destination = this.region(destination_ptr);
     return this.do_poseidon_hash(left_input, right_input, curve, destination)
       .ptr;
   }
@@ -300,36 +299,36 @@ export class VMInstance {
     vk_ptr: number,
     curve: number
   ): number {
-    let input = this.region(input_ptr);
-    let proof = this.region(public_ptr);
-    let vk = this.region(vk_ptr);
+    const input = this.region(input_ptr);
+    const proof = this.region(public_ptr);
+    const vk = this.region(vk_ptr);
     return this.do_groth16_verify(input, proof, vk, curve);
   }
 
   keccak_256(input_ptr: number, destination_ptr: number): number {
-    let input = this.region(input_ptr);
-    let destination = this.region(destination_ptr);
+    const input = this.region(input_ptr);
+    const destination = this.region(destination_ptr);
     return this.do_keccak_256(input, destination).ptr;
   }
 
   sha256(input_ptr: number, destination_ptr: number): number {
-    let input = this.region(input_ptr);
-    let destination = this.region(destination_ptr);
+    const input = this.region(input_ptr);
+    const destination = this.region(destination_ptr);
     return this.do_sha256(input, destination).ptr;
   }
 
   debug(message_ptr: number) {
-    let message = this.region(message_ptr);
+    const message = this.region(message_ptr);
     this.do_debug(message);
   }
 
   query_chain(request_ptr: number): number {
-    let request = this.region(request_ptr);
+    const request = this.region(request_ptr);
     return this.do_query_chain(request).ptr;
   }
 
   abort(message_ptr: number) {
-    let message = this.region(message_ptr);
+    const message = this.region(message_ptr);
     this.do_abort(message);
   }
 
@@ -338,7 +337,7 @@ export class VMInstance {
   }
 
   do_db_read(key: Region): Region {
-    let value: Uint8Array | null = this.backend.storage.get(key.data);
+    const value: Uint8Array | null = this.backend.storage.get(key.data);
 
     if (key.str.length > MAX_LENGTH_DB_KEY) {
       throw new Error(
@@ -347,7 +346,7 @@ export class VMInstance {
     }
 
     if (this.env) {
-      let gasInfo = GasInfo.with_externally_used(key.length);
+      const gasInfo = GasInfo.with_externally_used(key.length);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -369,7 +368,7 @@ export class VMInstance {
     }
 
     if (this.env) {
-      let gasInfo = GasInfo.with_externally_used(key.length + value.length);
+      const gasInfo = GasInfo.with_externally_used(key.length + value.length);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -378,7 +377,7 @@ export class VMInstance {
 
   do_db_remove(key: Region) {
     if (this.env) {
-      let gasInfo = GasInfo.with_externally_used(key.length);
+      const gasInfo = GasInfo.with_externally_used(key.length);
       this.env.processGasInfo(gasInfo);
     }
     this.backend.storage.remove(key.data);
@@ -392,11 +391,11 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_externally_used(GAS_COST_RANGE);
+      const gasInfo = GasInfo.with_externally_used(GAS_COST_RANGE);
       this.env.processGasInfo(gasInfo);
     }
 
-    let region = this.allocate(iteratorId.length);
+    const region = this.allocate(iteratorId.length);
     region.write(iteratorId);
 
     return region;
@@ -407,7 +406,7 @@ export class VMInstance {
 
     if (record === null) {
       if (this.env) {
-        let gasInfo = GasInfo.with_externally_used(GAS_COST_LAST_ITERATION);
+        const gasInfo = GasInfo.with_externally_used(GAS_COST_LAST_ITERATION);
         this.env.processGasInfo(gasInfo);
       }
       return this.allocate_bytes(Uint8Array.from([0, 0, 0, 0, 0, 0, 0, 0]));
@@ -415,7 +414,7 @@ export class VMInstance {
 
     // gas cost = key.length + value.length of the item
     if (this.env) {
-      let gasInfo = GasInfo.with_externally_used(
+      const gasInfo = GasInfo.with_externally_used(
         record.key.length + record.value.length
       );
       this.env.processGasInfo(gasInfo);
@@ -448,12 +447,12 @@ export class VMInstance {
       throw new Error('Empty address.');
     }
 
-    let result = this.backend.backend_api.human_address(source.data);
+    const result = this.backend.backend_api.human_address(source.data);
 
     destination.write_str(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(GAS_COST_HUMANIZE);
+      const gasInfo = GasInfo.with_cost(GAS_COST_HUMANIZE);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -461,18 +460,18 @@ export class VMInstance {
   }
 
   do_addr_canonicalize(source: Region, destination: Region): Region {
-    let source_data = source.str;
+    const source_data = source.str;
 
     if (source_data.length === 0) {
       throw new Error('Empty address.');
     }
 
-    let result = this.backend.backend_api.canonical_address(source_data);
+    const result = this.backend.backend_api.canonical_address(source_data);
 
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
+      const gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -500,7 +499,7 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
+      const gasInfo = GasInfo.with_cost(GAS_COST_CANONICALIZE);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -520,7 +519,7 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(
+      const gasInfo = GasInfo.with_cost(
         Environment.gasConfig.secp256k1_verify_cost
       );
       this.env.processGasInfo(gasInfo);
@@ -546,7 +545,7 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(
+      const gasInfo = GasInfo.with_cost(
         Environment.gasConfig.secp256k1_recover_pubkey_cost
       );
       this.env.processGasInfo(gasInfo);
@@ -575,7 +574,7 @@ export class VMInstance {
     const isValidSignature = VMInstance.eddsa.verify(msg, _signature, _pubkey);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(
+      const gasInfo = GasInfo.with_cost(
         Environment.gasConfig.ed25519_verify_cost
       );
       this.env.processGasInfo(gasInfo);
@@ -597,7 +596,7 @@ export class VMInstance {
     public_keys_ptr: Region
   ): number {
     let messages = decodeSections(messages_ptr.data);
-    let signatures = decodeSections(signatures_ptr.data);
+    const signatures = decodeSections(signatures_ptr.data);
     let publicKeys = decodeSections(public_keys_ptr.data);
 
     if (
@@ -639,7 +638,7 @@ export class VMInstance {
     }
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(
+      const gasInfo = GasInfo.with_cost(
         Environment.gasConfig.ed25519_batch_verify_cost
       );
       this.env.processGasInfo(gasInfo);
@@ -653,15 +652,11 @@ export class VMInstance {
       const _signature = VMInstance.eddsa.makeSignature(signature);
       const _publicKey = VMInstance.eddsa.keyFromPublic(publicKey);
 
-      let isValid: boolean;
       try {
-        isValid = VMInstance.eddsa.verify(message, _signature, _publicKey);
+        if (VMInstance.eddsa.verify(message, _signature, _publicKey) === false)
+          return 1;
       } catch (e) {
         console.log(e);
-        return 1;
-      }
-
-      if (!isValid) {
         return 1;
       }
     }
@@ -670,11 +665,11 @@ export class VMInstance {
   }
 
   do_curve_hash(input: Region, curve: number, destination: Region): Region {
-    let result = this.backend.backend_api.curve_hash(input.data, curve);
+    const result = this.backend.backend_api.curve_hash(input.data, curve);
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(Environment.gasConfig.curve_hash_cost);
+      const gasInfo = GasInfo.with_cost(Environment.gasConfig.curve_hash_cost);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -682,11 +677,11 @@ export class VMInstance {
   }
 
   do_keccak_256(input: Region, destination: Region): Region {
-    let result = this.backend.backend_api.keccak_256(input.data);
+    const result = this.backend.backend_api.keccak_256(input.data);
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(Environment.gasConfig.keccak_256_cost);
+      const gasInfo = GasInfo.with_cost(Environment.gasConfig.keccak_256_cost);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -694,11 +689,11 @@ export class VMInstance {
   }
 
   do_sha256(input: Region, destination: Region): Region {
-    let result = this.backend.backend_api.sha256(input.data);
+    const result = this.backend.backend_api.sha256(input.data);
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(Environment.gasConfig.sha256_cost);
+      const gasInfo = GasInfo.with_cost(Environment.gasConfig.sha256_cost);
       this.env.processGasInfo(gasInfo);
     }
 
@@ -711,7 +706,7 @@ export class VMInstance {
     curve: number,
     destination: Region
   ): Region {
-    let result = this.backend.backend_api.poseidon_hash(
+    const result = this.backend.backend_api.poseidon_hash(
       left_input.data,
       right_input.data,
       curve
@@ -719,7 +714,9 @@ export class VMInstance {
     destination.write(result);
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(Environment.gasConfig.poseidon_hash_cost);
+      const gasInfo = GasInfo.with_cost(
+        Environment.gasConfig.poseidon_hash_cost
+      );
       this.env.processGasInfo(gasInfo);
     }
 
@@ -740,7 +737,7 @@ export class VMInstance {
     );
 
     if (this.env) {
-      let gasInfo = GasInfo.with_cost(
+      const gasInfo = GasInfo.with_cost(
         Environment.gasConfig.groth16_verify_cost
       );
       this.env.processGasInfo(gasInfo);
@@ -763,7 +760,7 @@ export class VMInstance {
       this.remainingGas
     );
     // auto update gas on this vm if use contract sharing
-    let region = this.allocate(resultPtr.length);
+    const region = this.allocate(resultPtr.length);
     region.write(resultPtr);
     return region;
   }
@@ -774,13 +771,14 @@ export class VMInstance {
 
   // entrypoints
   public instantiate(env: Env, info: MessageInfo, msg: object): object {
-    let instantiate = this.exports[this.version === 4 ? 'init' : 'instantiate'];
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let infoArg = this.version === 4 ? getOldInfo(info) : info;
-    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
+    const instantiate =
+      this.exports[this.version === 4 ? 'init' : 'instantiate'];
+    const envArg = this.version === 4 ? getOldEnv(env) : env;
+    const infoArg = this.version === 4 ? getOldInfo(info) : info;
+    const args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = instantiate(...args);
-    let { json } = this.region(result);
+    const result = instantiate(...args);
+    const { json } = this.region(result);
     if (this.version < 6) {
       return getNewResponse(json);
     }
@@ -788,13 +786,13 @@ export class VMInstance {
   }
 
   public execute(env: Env, info: MessageInfo, msg: object): object {
-    let execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let infoArg = this.version === 4 ? getOldInfo(info) : info;
-    let args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
+    const execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
+    const envArg = this.version === 4 ? getOldEnv(env) : env;
+    const infoArg = this.version === 4 ? getOldInfo(info) : info;
+    const args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = execute(...args);
-    let { json } = this.region(result);
+    const result = execute(...args);
+    const { json } = this.region(result);
     if (this.version < 6) {
       return getNewResponse(json);
     }
@@ -802,18 +800,18 @@ export class VMInstance {
   }
 
   public query(env: Env, msg: object): object {
-    let { query } = this.exports;
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
+    const { query } = this.exports;
+    const envArg = this.version === 4 ? getOldEnv(env) : env;
+    const args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = true;
-    let result = query(...args);
+    const result = query(...args);
     return this.region(result).json;
   }
 
   public migrate(env: Env, msg: object): object {
-    let { migrate } = this.exports;
-    let envArg = this.version === 4 ? getOldEnv(env) : env;
-    let args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
+    const { migrate } = this.exports;
+    const envArg = this.version === 4 ? getOldEnv(env) : env;
+    const args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
     if (this.version === 4) {
       const infoArg: OldMessageInfo = {
         sender: '',
@@ -822,8 +820,8 @@ export class VMInstance {
       args.splice(1, 0, this.allocate_json(infoArg).ptr);
     }
     this.storageReadonly = false;
-    let result = migrate(...args);
-    let { json } = this.region(result);
+    const result = migrate(...args);
+    const { json } = this.region(result);
     if (this.version < 6) {
       return getNewResponse(json);
     }
@@ -831,59 +829,59 @@ export class VMInstance {
   }
 
   public reply(env: Env, msg: object): object {
-    let { reply } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { reply } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = reply(...args);
+    const result = reply(...args);
     return this.region(result).json;
   }
 
   // IBC implementation
   public ibc_channel_open(env: Env, msg: object): object {
-    let { ibc_channel_open } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { ibc_channel_open } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = ibc_channel_open(...args);
+    const result = ibc_channel_open(...args);
     return this.region(result).json;
   }
 
   public ibc_channel_connect(env: Env, msg: object): object {
-    let { ibc_channel_connect } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { ibc_channel_connect } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = ibc_channel_connect(...args);
+    const result = ibc_channel_connect(...args);
     return this.region(result).json;
   }
 
   public ibc_channel_close(env: Env, msg: object): object {
-    let { ibc_channel_close } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { ibc_channel_close } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = ibc_channel_close(...args);
+    const result = ibc_channel_close(...args);
     return this.region(result).json;
   }
 
   public ibc_packet_receive(env: Env, msg: object): object {
-    let { ibc_packet_receive } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { ibc_packet_receive } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = ibc_packet_receive(...args);
+    const result = ibc_packet_receive(...args);
     return this.region(result).json;
   }
 
   public ibc_packet_ack(env: Env, msg: object): object {
-    let { ibc_packet_ack } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { ibc_packet_ack } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = ibc_packet_ack(...args);
+    const result = ibc_packet_ack(...args);
     return this.region(result).json;
   }
 
   public ibc_packet_timeout(env: Env, msg: object): object {
-    let { ibc_packet_timeout } = this.exports;
-    let args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    const { ibc_packet_timeout } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    let result = ibc_packet_timeout(...args);
+    const result = ibc_packet_timeout(...args);
     return this.region(result).json;
   }
 }
@@ -891,7 +889,7 @@ export class VMInstance {
 function decodeSections(
   data: Uint8Array | number[]
 ): (number[] | Uint8Array)[] {
-  let result: (number[] | Uint8Array)[] = [];
+  const result: (number[] | Uint8Array)[] = [];
   let remainingLen = data.length;
 
   while (remainingLen >= 4) {
