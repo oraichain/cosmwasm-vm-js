@@ -292,17 +292,13 @@ export class SortedKVIterStorage
       const entry = beginIter.value();
       if (entry === null) break;
       const [key, value] = entry;
-      // start of search just 1 item
-      if (hasStart && compare(start, key) === 1) continue;
 
       // different namespace
-      if (filterKeyLength && key[0] === 0 && filterKeyLength != key[1]) {
-        continue;
+      if (!filterKeyLength || key[0] !== 0 || filterKeyLength === key[1]) {
+        data.push({ key, value });
       }
 
       // end of search
-      data.push({ key, value });
-
       if (endIter !== null && beginIter.node === endIter.node) break;
       beginIter = beginIter.next();
     }

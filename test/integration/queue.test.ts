@@ -36,7 +36,7 @@ describe('queue', () => {
   beforeEach(async () => {
     const backend: IBackend = {
       backend_api: new BasicBackendApi('terra'),
-      storage: new BasicKVIterStorage(),
+      storage: new SortedKVIterStorage(),
       querier: new BasicQuerier(),
     };
     const env = new Environment(backend.backend_api, 100_000_000_000_000);
