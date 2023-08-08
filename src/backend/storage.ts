@@ -5,6 +5,7 @@ import { AbstractSortedSet, Options } from '../sortedset';
 import { BinaryTreeIterator } from 'sortedset/BinaryTreeIterator';
 
 export interface IStorage {
+  dict: Immutable.Map<string, string>;
   get(key: Uint8Array): Uint8Array | null;
 
   set(key: Uint8Array, value: Uint8Array): void;
@@ -170,7 +171,11 @@ export const SortedSetOption: Options = {
 };
 
 export class SortedKVStorage implements IStorage {
-  // TODO: Add binary uint / typed Addr maps for cw-storage-plus compatibility
+  get dict(): Immutable.Map<string, string> {
+    return Immutable.Map(
+      this.sortedSet.toArray().map(([k, v]) => [toBase64(k), toBase64(v)])
+    );
+  }
 
   constructor(
     public sortedSet: AbstractSortedSet = new AbstractSortedSet(SortedSetOption)
