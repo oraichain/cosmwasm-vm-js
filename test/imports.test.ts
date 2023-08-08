@@ -149,7 +149,7 @@ describe('do_db_remove', () => {
       vm.do_db_remove(keyPtr);
     } catch (e) {
       expect(e).toEqual(
-        new Error(`Key length 1664000 exceeds maximum length 65536.`)
+        new Error(`Key length 1664000 exceeds maximum length 65536`)
       );
     }
   });

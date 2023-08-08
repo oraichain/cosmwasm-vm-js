@@ -42,9 +42,6 @@ export interface IBackendApi {
   sha256(input: Uint8Array): Uint8Array;
 }
 
-export const GAS_COST_HUMANIZE = 44;
-export const GAS_COST_CANONICALIZE = 55;
-
 export class BasicBackendApi implements IBackendApi {
   public CANONICAL_LENGTH = 54;
   public EXCESS_PADDING = 6;

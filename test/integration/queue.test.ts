@@ -5,6 +5,7 @@ import {
   BasicKVIterStorage,
   BasicQuerier,
   IBackend,
+  SortedKVIterStorage,
 } from '../../src/backend';
 import { Region } from '../../src/memory';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';

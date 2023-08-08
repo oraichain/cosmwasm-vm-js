@@ -6,15 +6,7 @@ import { sha256 } from '@cosmjs/crypto';
 import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { metering } from '@oraichain/wasm-json-toolkit';
 import { Region } from './memory';
-import {
-  GAS_COST_CANONICALIZE,
-  GAS_COST_HUMANIZE,
-  GAS_COST_LAST_ITERATION,
-  GAS_COST_RANGE,
-  GasInfo,
-  IBackend,
-  Record,
-} from './backend';
+import { GasInfo, IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
 import { toByteArray, toNumber } from './helpers/byte-array';
 import {
@@ -25,6 +17,11 @@ import {
 } from './helpers/convert';
 import { Environment, GAS_PER_OP } from './environment';
 
+export const GAS_COST_HUMANIZE = 44;
+export const GAS_COST_CANONICALIZE = 55;
+export const GAS_COST_LAST_ITERATION = 37;
+export const GAS_COST_RANGE = 11;
+
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
 export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
@@ -33,6 +30,8 @@ export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;
 export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
 export const EDDSA_PUBKEY_LEN: number = 32;
+
+let db;
 
 export class VMInstance {
   // default version
@@ -373,9 +372,17 @@ export class VMInstance {
     }
 
     this.backend.storage.set(key.data, value.data);
+
+    db = this.backend.storage;
   }
 
   do_db_remove(key: Region) {
+    if (key.length > MAX_LENGTH_DB_KEY) {
+      throw new Error(
+        `Key length ${key.length} exceeds maximum length ${MAX_LENGTH_DB_KEY}`
+      );
+    }
+
     if (this.env) {
       const gasInfo = GasInfo.with_externally_used(key.length);
       this.env.processGasInfo(gasInfo);
@@ -793,6 +800,7 @@ export class VMInstance {
     this.storageReadonly = false;
     const result = execute(...args);
     const { json } = this.region(result);
+
     if (this.version < 6) {
       return getNewResponse(json);
     }

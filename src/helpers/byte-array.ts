@@ -29,6 +29,7 @@ export function toByteArray(
   fixedLength?: number,
   offset: number = 0
 ) {
+  if (number === 0) return new Uint8Array(fixedLength ?? 1);
   // log2(1) == 0, ceil(0) = 0
   const byteLength = fixedLength ?? (Math.ceil(Math.log2(number) / 8) || 1);
   const bytes = new Uint8Array(byteLength);
