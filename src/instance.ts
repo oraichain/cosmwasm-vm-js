@@ -71,7 +71,7 @@ export class VMInstance {
         abort: this.abort.bind(this),
         // old support
         canonicalize_address: this.addr_canonicalize.bind(this),
-        humanize_address: this.do_addr_humanize.bind(this),
+        humanize_address: this.addr_humanize.bind(this),
       },
     };
     let mod: WebAssembly.Module;
