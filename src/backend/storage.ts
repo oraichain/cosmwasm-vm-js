@@ -469,17 +469,22 @@ export class BinaryKVIterStorage
   implements IIterStorage
 {
   constructor(
-    list?: Immutable.List<[Uint8Array, Uint8Array]>,
+    dict?: Immutable.Map<string, string>,
     public iterators: Map<number, Iter> = new Map()
   ) {
-    let orderedList: OrderedEntryList<Uint8Array, Uint8Array> | undefined;
-    if (list) {
-      orderedList = new OrderedEntryList<Uint8Array, Uint8Array>(
+    let list: OrderedEntryList<Uint8Array, Uint8Array> | undefined;
+    if (dict) {
+      list = new OrderedEntryList<Uint8Array, Uint8Array>(
         compare,
-        list.sortBy((a) => a[0], compare)
+        Immutable.List(dict)
+          .map(
+            ([k, v]) =>
+              [fromBase64(k), fromBase64(v)] as [Uint8Array, Uint8Array]
+          )
+          .sortBy((entry) => entry[0], compare)
       );
     }
-    super(orderedList);
+    super(list);
   }
 
   all(iterator_id: Uint8Array): Array<Record> {

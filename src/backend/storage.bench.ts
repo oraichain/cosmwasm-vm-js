@@ -12,7 +12,7 @@ import {
 let store = new BasicKVIterStorage();
 let binaryStore = new BinaryKVIterStorage();
 let fastStore = new SortedKVIterStorage();
-const n = 10000;
+const n = 100000;
 console.time('BasicKVIterStorage Insert');
 for (let i = 0; i < n; ++i) store.set(toByteArray(i), toAscii(i.toString()));
 console.timeEnd('BasicKVIterStorage Insert');
