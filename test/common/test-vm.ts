@@ -4,7 +4,7 @@ import {
   VMInstance,
   IBackend,
   BasicBackendApi,
-  BasicKVIterStorage,
+  SortedKVIterStorage,
   BasicQuerier,
   Region,
 } from '../../src';
@@ -28,7 +28,7 @@ export const createVM = async (): Promise<VMInstance> => {
   const wasmByteCode = readFileSync('./testdata/v1.0/hackatom.wasm');
   const backend: IBackend = {
     backend_api: new BasicBackendApi('terra'),
-    storage: new BasicKVIterStorage(),
+    storage: new SortedKVIterStorage(),
     querier: new BasicQuerier(),
   };
 

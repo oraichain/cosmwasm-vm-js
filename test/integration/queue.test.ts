@@ -2,12 +2,10 @@ import { readFileSync } from 'fs';
 import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
-  BasicKVIterStorage,
   BasicQuerier,
   IBackend,
   SortedKVIterStorage,
 } from '../../src/backend';
-import { Region } from '../../src/memory';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 import { Environment } from '../../src';
 
@@ -174,7 +172,7 @@ describe('queue', () => {
     expect(parseBase64OkResponse(countResponse)).toEqual({ count: 12 });
 
     const list = parseBase64OkResponse(listResponse);
-    console.log('list.empty', list.empty);
+
     expect(list.empty).toStrictEqual([]);
     expect(list.early).toStrictEqual([25, 26, 27, 28, 29, 30, 31]);
     expect(list.late).toStrictEqual([32, 33, 34, 35, 36]);

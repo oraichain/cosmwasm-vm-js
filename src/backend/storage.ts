@@ -222,6 +222,7 @@ export class SortedKVIterStorage
         sortedSet.insert([fromBase64(k), fromBase64(v)]);
       }
     }
+
     super(sortedSet);
   }
 
@@ -279,33 +280,28 @@ export class SortedKVIterStorage
       return toByteArray(newId);
     }
 
-    let data: Record[] = [];
+    const data: Record[] = [];
 
     let beginIter: BinaryTreeIterator | null = start
       ? this.sortedSet.findIterator([start])
       : this.sortedSet.beginIterator();
-    let endIter = end
-      ? this.sortedSet.findIterator([end]).previous()
-      : this.sortedSet.endIterator();
 
     while (beginIter !== null) {
-      const entry = beginIter.value();
-      if (entry === null) break;
-      const [key, value] = entry;
+      const entry: [Uint8Array, Uint8Array] = beginIter.value();
+      if (entry !== null) {
+        const [key, value] = entry;
+        if (hasEnd && compare(key, end) >= 0) break;
 
-      // different namespace
-      if (!filterKeyLength || key[0] !== 0 || filterKeyLength === key[1]) {
-        data.push({ key, value });
+        // different namespace
+        if (!filterKeyLength || key[0] !== 0 || filterKeyLength === key[1]) {
+          data.push({ key, value });
+        }
       }
 
-      // end of search
-      if (endIter !== null && beginIter.node === endIter.node) break;
       beginIter = beginIter.next();
     }
 
-    if (order === Order.Descending) {
-      data.reverse();
-    }
+    if (order === Order.Descending) data.reverse();
 
     this.iterators.set(newId, { data, position: 0 });
     return toByteArray(newId);

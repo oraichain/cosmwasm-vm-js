@@ -2,11 +2,10 @@ import { readFileSync } from 'fs';
 import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
-  BasicKVIterStorage,
+  SortedKVIterStorage,
   BasicQuerier,
 } from '../../src/backend';
 import { fromBase64 } from '@cosmjs/encoding';
-import { Region } from '../../src/memory';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 
 type HackatomQueryRequest = {
@@ -70,7 +69,7 @@ describe('hackatom', () => {
     querier = new HackatomMockQuerier();
     vm = new VMInstance({
       backend_api: new BasicBackendApi('terra'),
-      storage: new BasicKVIterStorage(),
+      storage: new SortedKVIterStorage(),
       querier,
     });
     await vm.build(wasmBytecode);

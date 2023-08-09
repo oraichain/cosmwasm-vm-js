@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { toAscii } from '@cosmjs/encoding';
+import { fromBase64, toAscii } from '@cosmjs/encoding';
 import { toByteArray, toNumber } from '../helpers/byte-array';
 import { BasicKVIterStorage, SortedKVIterStorage, Order } from './storage';
 
