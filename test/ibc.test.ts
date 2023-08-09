@@ -1,11 +1,11 @@
 import { readFileSync } from 'fs';
-import { SortedKVIterStorage, VMInstance } from '../src';
+import { BasicKVIterStorage, VMInstance } from '../src';
 import { BasicBackendApi, BasicQuerier, IBackend } from '../src/backend';
 
 const wasmByteCode = readFileSync('testdata/v1.1/ibc_reflect.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
-  storage: new SortedKVIterStorage(),
+  storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
 

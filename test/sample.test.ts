@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { VMInstance } from '../src/instance';
 import {
   BasicBackendApi,
-  SortedKVIterStorage,
+  BasicKVIterStorage,
   BasicQuerier,
   IBackend,
 } from '../src/backend';
@@ -10,7 +10,7 @@ import {
 const wasmBytecode = readFileSync('testdata/v1.0/cosmwasm_vm_test.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
-  storage: new SortedKVIterStorage(),
+  storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
 

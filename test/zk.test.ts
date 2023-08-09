@@ -5,7 +5,7 @@ import { VMInstance } from '../src';
 
 import {
   BasicBackendApi,
-  SortedKVIterStorage,
+  BasicKVIterStorage,
   BasicQuerier,
   IBackend,
 } from '../src/backend';
@@ -50,7 +50,7 @@ export class ZkBackendApi extends BasicBackendApi {
 const wasmBytecode = readFileSync('testdata/v1.1/zk.wasm');
 const backend: IBackend = {
   backend_api: new ZkBackendApi('terra'),
-  storage: new SortedKVIterStorage(),
+  storage: new BasicKVIterStorage(),
   querier: new BasicQuerier(),
 };
 

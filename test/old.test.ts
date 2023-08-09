@@ -5,10 +5,11 @@ import { Environment, VMInstance } from '../src';
 
 import {
   BasicBackendApi,
-  SortedKVIterStorage,
+  BasicKVIterStorage,
   BasicQuerier,
   Order,
 } from '../src/backend';
+import { parseBase64Response } from './common/test-vm';
 
 const mockEnv: Env = {
   block: {
@@ -29,7 +30,7 @@ const mockInfo: MessageInfo = {
 async function testVersion(version = '0.13') {
   const vm = new VMInstance({
     backend_api: new BasicBackendApi('orai'),
-    storage: new SortedKVIterStorage(),
+    storage: new BasicKVIterStorage(),
     querier: new BasicQuerier(),
   });
   await vm.build(readFileSync(`testdata/v${version}/oraichain_nft.wasm`));
@@ -63,13 +64,14 @@ async function testVersion(version = '0.13') {
   });
 
   let queryRes = vm.query(mockEnv, { all_tokens: {} }) as { ok: any };
-  console.log(JSON.parse(fromAscii(fromBase64(queryRes.ok))));
+  console.log(parseBase64Response(queryRes.ok));
 
   queryRes = vm.query(mockEnv, {
     tokens: { owner: 'orai122qgjdfjm73guxjq0y67ng8jgex4w09ttguavj' },
   }) as { ok: any };
 
-  expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
+  console.log(parseBase64Response(queryRes.ok));
+  expect(parseBase64Response(queryRes.ok)).toEqual({
     tokens: ['token_id1', 'token_id2'],
   });
 }
@@ -78,7 +80,7 @@ describe('Old CosmWasmVM', () => {
   it('test storage', () => {
     const vm = new VMInstance({
       backend_api: new BasicBackendApi('orai'),
-      storage: new SortedKVIterStorage(),
+      storage: new BasicKVIterStorage(),
       querier: new BasicQuerier(),
     });
     // Arrange
@@ -130,7 +132,7 @@ describe('Old CosmWasmVM', () => {
     const vm = new VMInstance(
       {
         backend_api,
-        storage: new SortedKVIterStorage(),
+        storage: new BasicKVIterStorage(),
         querier: new BasicQuerier(),
       },
       env
@@ -159,7 +161,7 @@ describe('Old CosmWasmVM', () => {
     console.log('gasUsed', vm.gasUsed - currentGasUsed);
 
     let queryRes = vm.query(mockEnv, { contract_info: {} }) as { ok: any };
-    expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
+    expect(parseBase64Response(queryRes.ok)).toEqual({
       name: 'name',
       symbol: 'symbol',
       version: 'version',
@@ -170,7 +172,7 @@ describe('Old CosmWasmVM', () => {
     vm.migrate(mockEnv, { test_field: 'abc' });
 
     queryRes = vm.query(mockEnv, { contract_info: {} }) as { ok: any };
-    expect(JSON.parse(fromAscii(fromBase64(queryRes.ok)))).toEqual({
+    expect(parseBase64Response(queryRes.ok)).toEqual({
       name: 'name',
       symbol: 'symbol',
       version: 'abc',

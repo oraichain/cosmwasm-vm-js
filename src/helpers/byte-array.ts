@@ -26,7 +26,7 @@ export function toNumber(bigEndianByteArray: Uint8Array | number[]) {
 
 export function toByteArray(
   number: number,
-  fixedLength?: number,
+  fixedLength: number = 4,
   offset: number = 0
 ) {
   if (number === 0) return new Uint8Array(fixedLength ?? 1);
