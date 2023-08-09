@@ -16,30 +16,25 @@ for (let i = 0; i < 1000000; ++i)
 console.timeEnd('SortedKVIterStorage Insert');
 
 let start = toByteArray(500000, 4);
-let stop = toByteArray(500010, 4);
+let stop = toByteArray(500005, 4);
 
+let ret;
 console.time('BasicKVIterStorage Scan');
-store.all(store.scan(start, stop, Order.Ascending));
+ret = store.all(store.scan(start, stop, Order.Ascending));
 console.timeEnd('BasicKVIterStorage Scan');
-
 console.log(
-  store
-    .all(store.scan(start, stop, Order.Ascending))
-    .map((record) => [
-      toNumber(record.key),
-      Buffer.from(record.value).toString(),
-    ])
+  ret.map((record) => [
+    toNumber(record.key),
+    Buffer.from(record.value).toString(),
+  ])
 );
 
 console.time('SortedKVIterStorage Scan');
-fastStore.all(fastStore.scan(start, stop, Order.Ascending));
+ret = fastStore.all(fastStore.scan(start, stop, Order.Ascending));
 console.timeEnd('SortedKVIterStorage Scan');
-
 console.log(
-  fastStore
-    .all(fastStore.scan(start, stop, Order.Ascending))
-    .map((record) => [
-      toNumber(record.key),
-      Buffer.from(record.value).toString(),
-    ])
+  ret.map((record) => [
+    toNumber(record.key),
+    Buffer.from(record.value).toString(),
+  ])
 );
