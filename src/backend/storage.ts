@@ -1,4 +1,4 @@
-import { fromAscii, fromBase64, toBase64 } from '@cosmjs/encoding';
+import { fromBase64, toBase64 } from '@cosmjs/encoding';
 import { compare, toByteArray, toNumber } from '../helpers/byte-array';
 import Immutable from 'immutable';
 import { AbstractSortedSet, Options } from '../sortedset';
