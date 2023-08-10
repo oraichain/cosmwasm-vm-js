@@ -2,16 +2,10 @@
 
 import { toAscii } from '@cosmjs/encoding';
 import { toByteArray, toNumber } from '../helpers/byte-array';
-import {
-  BasicKVIterStorage,
-  SortedKVIterStorage,
-  BinaryKVIterStorage,
-  Order,
-} from './storage';
+import { BasicKVIterStorage, BinaryKVIterStorage, Order } from './storage';
 
 let store = new BasicKVIterStorage();
 let binaryStore = new BinaryKVIterStorage();
-let fastStore = new SortedKVIterStorage();
 const n = 1000000;
 let start = toByteArray(n >> 1);
 let stop = toByteArray((n >> 1) + 10);
@@ -23,10 +17,6 @@ console.time('BinaryKVIterStorage Insert');
 for (let i = 0; i < n; ++i)
   binaryStore.set(toByteArray(i), toAscii(i.toString()));
 console.timeEnd('BinaryKVIterStorage Insert');
-console.time('SortedKVIterStorage Insert');
-for (let i = 0; i < n; ++i)
-  fastStore.set(toByteArray(i), toAscii(i.toString()));
-console.timeEnd('SortedKVIterStorage Insert');
 
 let ret;
 console.time('BasicKVIterStorage Scan');
@@ -42,16 +32,6 @@ console.log(
 console.time('BinaryKVIterStorage Scan');
 ret = binaryStore.all(binaryStore.scan(start, stop, Order.Ascending));
 console.timeEnd('BinaryKVIterStorage Scan');
-console.log(
-  ret.map((record) => [
-    toNumber(record.key),
-    Buffer.from(record.value).toString(),
-  ])
-);
-
-console.time('SortedKVIterStorage Scan');
-ret = fastStore.all(fastStore.scan(start, stop, Order.Ascending));
-console.timeEnd('SortedKVIterStorage Scan');
 console.log(
   ret.map((record) => [
     toNumber(record.key),

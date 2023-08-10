@@ -149,7 +149,11 @@ export class BasicKVIterStorage extends BasicKVStorage implements IIterStorage {
         continue;
 
       // different namespace
-      if (filterKeyLength && keyArr[0] === 0 && filterKeyLength != keyArr[1]) {
+      if (
+        filterKeyLength !== 0 &&
+        keyArr[0] === 0 &&
+        filterKeyLength !== keyArr[1]
+      ) {
         continue;
       }
 
@@ -192,7 +196,7 @@ export class BinaryKVStorage implements IStorage {
   }
 
   remove(key: Uint8Array): void {
-    this.dict = this.dict.remove(key);
+    this.dict = this.dict.delete(key);
   }
 }
 
@@ -279,7 +283,7 @@ export class BinaryKVIterStorage
     // loop and filter
     iter.forEach((value, key) => {
       // different namespace
-      if (!filterKeyLength || key[0] !== 0 || filterKeyLength === key[1]) {
+      if (filterKeyLength === 0 || key[0] !== 0 || filterKeyLength === key[1]) {
         data.push({ key, value });
       }
     });
