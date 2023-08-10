@@ -10,6 +10,9 @@ import { AbstractSortedSet, Options } from '../sortedset';
 import { BinaryTreeIterator } from 'sortedset/BinaryTreeIterator';
 
 export interface IStorage {
+  dict?: Immutable.Map<string, string>;
+  binaryDict?: Immutable.SortedMap<Uint8Array, Uint8Array>;
+
   get(key: Uint8Array): Uint8Array | null;
 
   set(key: Uint8Array, value: Uint8Array): void;
@@ -324,20 +327,20 @@ export class SortedKVIterStorage
 
 export class BinaryKVStorage implements IStorage {
   constructor(
-    public dict: Immutable.SortedMap<
+    public binaryDict: Immutable.SortedMap<
       Uint8Array,
       Uint8Array
     > = Immutable.SortedMap(compare)
   ) {}
 
   *keys() {
-    for (const key of this.dict.keys()) {
+    for (const key of this.binaryDict.keys()) {
       yield key;
     }
   }
 
   get(key: Uint8Array): Uint8Array | null {
-    const value = this.dict.get(key);
+    const value = this.binaryDict.get(key);
     if (value === undefined) {
       return null;
     }
@@ -345,11 +348,14 @@ export class BinaryKVStorage implements IStorage {
   }
 
   set(key: Uint8Array, value: Uint8Array): void {
-    this.dict = this.dict.set(new Uint8Array(key), new Uint8Array(value));
+    this.binaryDict = this.binaryDict.set(
+      new Uint8Array(key),
+      new Uint8Array(value)
+    );
   }
 
   remove(key: Uint8Array): void {
-    this.dict = this.dict.remove(key);
+    this.binaryDict = this.binaryDict.remove(key);
   }
 }
 
@@ -426,7 +432,7 @@ export class BinaryKVIterStorage
     const data: Record[] = [];
 
     // we also create a temporary iterator so we just start from here
-    let iter = hasStart ? this.dict.from(start) : this.dict;
+    let iter = hasStart ? this.binaryDict.from(start) : this.binaryDict;
     if (hasEnd) {
       iter = iter.takeUntil((_, key) => {
         return compare(key, end) >= 0;
