@@ -1,17 +1,12 @@
-import { fromAscii, fromBase64, toBase64 } from '@cosmjs/encoding';
-import {
-  compare,
-  decreaseBytes,
-  toByteArray,
-  toNumber,
-} from '../helpers/byte-array';
+import { fromBase64, toBase64 } from '@cosmjs/encoding';
+import { compare, toByteArray, toNumber } from '../helpers/byte-array';
 import Immutable from '@oraichain/immutable';
 import { AbstractSortedSet, Options } from '../sortedset';
 import { BinaryTreeIterator } from 'sortedset/BinaryTreeIterator';
 
 export interface IStorage {
   dict?: Immutable.Map<string, string>;
-  binaryDict?: Immutable.SortedMap<Uint8Array, Uint8Array>;
+  binaryDict?: Immutable.Map<Uint8Array, Uint8Array>;
 
   get(key: Uint8Array): Uint8Array | null;
 
