@@ -25,20 +25,23 @@ export function toNumber(bigEndianByteArray: Uint8Array | number[]) {
 }
 
 export function toByteArray(
-  number: number,
+  num: number,
   fixedLength: number = 4,
   offset: number = 0
 ) {
-  if (number === 0) return new Uint8Array(fixedLength ?? 1);
+  if (num === 0) return new Uint8Array(fixedLength ?? 1);
   // log2(1) == 0, ceil(0) = 0
-  const byteLength = fixedLength ?? (Math.ceil(Math.log2(number) / 8) || 1);
+  const byteLength = fixedLength ?? (Math.ceil(Math.log2(num) / 8) || 1);
   const bytes = new Uint8Array(byteLength);
-  let ind = byteLength - offset;
-  while (number > 0) {
-    bytes[--ind] = number & 0b11111111;
-    number >>= 8;
-  }
+  writeUInt32BE(bytes, num, byteLength - offset);
   return bytes;
+}
+
+export function writeUInt32BE(bytes: Uint8Array, num: number, start: number) {
+  while (num > 0) {
+    bytes[--start] = num & 0b11111111;
+    num >>= 8;
+  }
 }
 
 export function decreaseBytes(bytes: Uint8Array) {
@@ -48,7 +51,21 @@ export function decreaseBytes(bytes: Uint8Array) {
     if (ret[i] === 0) {
       ret[i] = 255;
     } else {
-      ret[i] -= 1;
+      ret[i]--;
+      break;
+    }
+  }
+  return ret;
+}
+
+export function increaseBytes(bytes: Uint8Array) {
+  const ret = new Uint8Array(bytes);
+  let i = ret.length - 1;
+  for (let i = 0; i < ret.length; ++i) {
+    if (ret[i] === 255) {
+      ret[i] = 0;
+    } else {
+      ret[i]++;
       break;
     }
   }
