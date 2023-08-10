@@ -1,5 +1,5 @@
 import { readFileSync } from 'fs';
-import { BasicKVIterStorage, VMInstance } from '../src';
+import { BinaryKVIterStorage, VMInstance } from '../src';
 import { BasicBackendApi, BasicQuerier, IBackend } from '../src/backend';
 import { writeData } from './common/test-vm';
 import * as testData from './common/test-data';
@@ -8,7 +8,7 @@ const wasmByteCode = readFileSync('testdata/v1.0/cosmwasm_vm_test.wasm');
 const cwMachineBytecode = readFileSync('testdata/v1.0/cw_machine-aarch64.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
-  storage: new BasicKVIterStorage(),
+  storage: new BinaryKVIterStorage(),
   querier: new BasicQuerier(),
 };
 

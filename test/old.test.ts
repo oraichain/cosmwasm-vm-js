@@ -5,7 +5,7 @@ import { Environment, VMInstance } from '../src';
 
 import {
   BasicBackendApi,
-  BasicKVIterStorage,
+  BinaryKVIterStorage,
   BasicQuerier,
   Order,
 } from '../src/backend';
@@ -30,7 +30,7 @@ const mockInfo: MessageInfo = {
 async function testVersion(version = '0.13') {
   const vm = new VMInstance({
     backend_api: new BasicBackendApi('orai'),
-    storage: new BasicKVIterStorage(),
+    storage: new BinaryKVIterStorage(),
     querier: new BasicQuerier(),
   });
   await vm.build(readFileSync(`testdata/v${version}/oraichain_nft.wasm`));
@@ -80,7 +80,7 @@ describe('Old CosmWasmVM', () => {
   it('test storage', () => {
     const vm = new VMInstance({
       backend_api: new BasicBackendApi('orai'),
-      storage: new BasicKVIterStorage(),
+      storage: new BinaryKVIterStorage(),
       querier: new BasicQuerier(),
     });
     // Arrange
@@ -132,7 +132,7 @@ describe('Old CosmWasmVM', () => {
     const vm = new VMInstance(
       {
         backend_api,
-        storage: new BasicKVIterStorage(),
+        storage: new BinaryKVIterStorage(),
         querier: new BasicQuerier(),
       },
       env

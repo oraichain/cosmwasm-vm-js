@@ -40,3 +40,17 @@ export function toByteArray(
   }
   return bytes;
 }
+
+export function decreaseBytes(bytes: Uint8Array) {
+  const ret = new Uint8Array(bytes);
+  let i = ret.length - 1;
+  for (let i = ret.length - 1; i >= 0; --i) {
+    if (ret[i] === 0) {
+      ret[i] = 255;
+    } else {
+      ret[i] -= 1;
+      break;
+    }
+  }
+  return ret;
+}

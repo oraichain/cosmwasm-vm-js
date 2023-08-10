@@ -45,10 +45,10 @@
     "@cosmjs/crypto": "^0.29.5",
     "@cosmjs/encoding": "^0.29.5",
     "@oraichain/cosmwasm-vm-zk-nodejs": "^0.0.7",
+    "@oraichain/immutable": "^4.3.5",
     "@oraichain/wasm-json-toolkit": "^1.0.24",
     "bech32": "1.1.4",
     "elliptic": "^6.5.4",
-    "immutable": "^4.3.2",
     "secp256k1": "^4.0.3"
   }
 }

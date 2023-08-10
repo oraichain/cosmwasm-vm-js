@@ -1,11 +1,15 @@
-import { fromBase64, toBase64 } from '@cosmjs/encoding';
-import { compare, toByteArray, toNumber } from '../helpers/byte-array';
-import Immutable from 'immutable';
+import { fromAscii, fromBase64, toBase64 } from '@cosmjs/encoding';
+import {
+  compare,
+  decreaseBytes,
+  toByteArray,
+  toNumber,
+} from '../helpers/byte-array';
+import Immutable from '@oraichain/immutable';
 import { AbstractSortedSet, Options } from '../sortedset';
 import { BinaryTreeIterator } from 'sortedset/BinaryTreeIterator';
 
 export interface IStorage {
-  dict: Immutable.Map<string, string>;
   get(key: Uint8Array): Uint8Array | null;
 
   set(key: Uint8Array, value: Uint8Array): void;
@@ -318,149 +322,34 @@ export class SortedKVIterStorage
   }
 }
 
-export class OrderedEntryList<T, V> {
-  constructor(
-    private readonly _compare: (a: T, b: T) => number,
-    private _list: Immutable.List<[T, V]> = Immutable.List()
-  ) {}
-
-  get size() {
-    return this._list.size;
-  }
-
-  toArray() {
-    return this._list.toArray();
-  }
-
-  *[Symbol.iterator]() {
-    yield* this._list;
-  }
-
-  set(key: T, value: V): OrderedEntryList<T, V> {
-    if (this._list.size === 0) {
-      return new OrderedEntryList(this._compare, this._list.push([key, value]));
-    }
-    const [index] = this.range(key, null);
-    const entry = this._list.get(index);
-    if (entry && this._compare(entry[0], key) === 0) {
-      return new OrderedEntryList(
-        this._compare,
-        this._list.set(index, [key, value])
-      );
-    }
-
-    return new OrderedEntryList(
-      this._compare,
-      this._list.insert(index + 1, [key, value])
-    );
-  }
-
-  remove(key: T): OrderedEntryList<T, V> {
-    const [ind] = this.find(key);
-    if (ind >= 0) {
-      return new OrderedEntryList(this._compare, this._list.remove(ind));
-    }
-    return this;
-  }
-
-  getEntry(index: number): [T, V] | null {
-    return this._list.get(index) ?? null;
-  }
-
-  get(key: T): V | null {
-    return this.find(key)[1];
-  }
-
-  find(key: T): [number, V | null] {
-    const arr = this._list;
-    let startIndex = 0;
-    let endIndex = arr.size - 1;
-
-    while (startIndex <= endIndex) {
-      let midIndex = (startIndex + endIndex) >> 1;
-      const [k, v] = arr.get(midIndex)!;
-      const check = this._compare(k, key);
-      if (check === 0) {
-        return [midIndex, v];
-      }
-
-      if (check < 0) {
-        startIndex = midIndex + 1;
-      } else {
-        endIndex = midIndex - 1;
-      }
-    }
-    return [-1, null];
-  }
-
-  // Range search using itarative binary search
-  range(start: T | null, end: T | null): [number, number] {
-    const arr = this._list;
-    const size = arr.size;
-    let startIndex = 0;
-    let endIndex = size - 1;
-    const upperLowerBounds = [startIndex, endIndex];
-
-    if (start !== null) {
-      while (startIndex < endIndex) {
-        let midIndex = (startIndex + endIndex) >> 1;
-        if (this._compare(start, arr.get(midIndex)![0]) < 1) {
-          endIndex = midIndex;
-        } else {
-          startIndex = midIndex + 1;
-        }
-      }
-      // saving startIndex in the result array that will be  returned...
-      upperLowerBounds[0] = startIndex;
-    }
-
-    if (end !== null) {
-      endIndex = size - 1;
-      while (startIndex < endIndex) {
-        let midIndex = ((startIndex + endIndex) >> 1) + 1;
-        if (this._compare(end, arr.get(midIndex)![0]) < 0) {
-          endIndex = midIndex - 1;
-        } else {
-          startIndex = midIndex;
-        }
-      }
-      upperLowerBounds[1] = endIndex - 1;
-    }
-
-    return upperLowerBounds as [number, number];
-  }
-}
-
 export class BinaryKVStorage implements IStorage {
   constructor(
-    public list: OrderedEntryList<
+    public dict: Immutable.SortedMap<
       Uint8Array,
       Uint8Array
-    > = new OrderedEntryList(compare)
+    > = Immutable.SortedMap(compare)
   ) {}
 
-  get dict(): Immutable.Map<string, string> {
-    return Immutable.Map(
-      this.list.toArray().map(([k, v]) => [toBase64(k), toBase64(v)])
-    );
-  }
-
   *keys() {
-    for (const entry of this.list) {
-      yield entry[0];
+    for (const key of this.dict.keys()) {
+      yield key;
     }
   }
 
   get(key: Uint8Array): Uint8Array | null {
-    return this.list.get(key);
+    const value = this.dict.get(key);
+    if (value === undefined) {
+      return null;
+    }
+    return value;
   }
 
   set(key: Uint8Array, value: Uint8Array): void {
-    this.list = this.list.set(new Uint8Array(key), new Uint8Array(value));
+    this.dict = this.dict.set(new Uint8Array(key), new Uint8Array(value));
   }
 
   remove(key: Uint8Array): void {
-    this.list = this.list.remove(key);
+    this.dict = this.dict.remove(key);
   }
 }
 
@@ -469,22 +358,10 @@ export class BinaryKVIterStorage
   implements IIterStorage
 {
   constructor(
-    dict?: Immutable.Map<string, string>,
+    dict?: Immutable.SortedMap<Uint8Array, Uint8Array>,
     public iterators: Map<number, Iter> = new Map()
   ) {
-    let list: OrderedEntryList<Uint8Array, Uint8Array> | undefined;
-    if (dict) {
-      list = new OrderedEntryList<Uint8Array, Uint8Array>(
-        compare,
-        Immutable.List(dict)
-          .map(
-            ([k, v]) =>
-              [fromBase64(k), fromBase64(v)] as [Uint8Array, Uint8Array]
-          )
-          .sortBy((entry) => entry[0], compare)
-      );
-    }
-    super(list);
+    super(dict);
   }
 
   all(iterator_id: Uint8Array): Array<Record> {
@@ -547,27 +424,23 @@ export class BinaryKVIterStorage
     }
 
     const data: Record[] = [];
-    let [currentInd, lastInd] = this.list.range(start, null);
 
-    while (true) {
-      const entry = this.list.getEntry(currentInd);
-      if (entry !== null) {
-        const [key, value] = entry;
-
-        if (hasEnd && compare(key, end) >= 0) {
-          break;
-        }
-
-        // different namespace
-        if (!filterKeyLength || key[0] !== 0 || filterKeyLength === key[1]) {
-          data.push({ key, value });
-        }
-      }
-      if (currentInd === lastInd) {
-        break;
-      }
-      currentInd++;
+    // we also create a temporary iterator so we just start from here
+    let iter = hasStart ? this.dict.from(start) : this.dict;
+    if (hasEnd) {
+      iter = iter.takeUntil((_, key) => {
+        return compare(key, end) >= 0;
+      });
     }
+
+    // loop and filter
+    iter.forEach((value, key) => {
+      // different namespace
+      if (!filterKeyLength || key[0] !== 0 || filterKeyLength === key[1]) {
+        data.push({ key, value });
+      }
+    });
+
     if (order === Order.Descending) data.reverse();
 
     this.iterators.set(newId, { data, position: 0 });

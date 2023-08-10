@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
-  BasicKVIterStorage,
+  BinaryKVIterStorage,
   BasicQuerier,
 } from '../../src/backend';
 import { fromBase64 } from '@cosmjs/encoding';
@@ -69,7 +69,7 @@ describe('hackatom', () => {
     querier = new HackatomMockQuerier();
     vm = new VMInstance({
       backend_api: new BasicBackendApi('terra'),
-      storage: new BasicKVIterStorage(),
+      storage: new BinaryKVIterStorage(),
       querier,
     });
     await vm.build(wasmBytecode);

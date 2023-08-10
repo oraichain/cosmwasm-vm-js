@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
-  BasicKVIterStorage,
+  BinaryKVIterStorage,
   BasicQuerier,
   IBackend,
 } from '../../src/backend';
@@ -13,7 +13,7 @@ import { Environment } from '../../src';
 const wasmBytecode = readFileSync('testdata/v1.1/cyberpunk.wasm');
 const backend: IBackend = {
   backend_api: new BasicBackendApi('terra'),
-  storage: new BasicKVIterStorage(),
+  storage: new BinaryKVIterStorage(),
   querier: new BasicQuerier(),
 };
 

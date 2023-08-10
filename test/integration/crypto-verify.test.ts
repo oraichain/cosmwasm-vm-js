@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { VMInstance } from '../../src/instance';
 import {
   BasicBackendApi,
-  BasicKVIterStorage,
+  BinaryKVIterStorage,
   BasicQuerier,
   IBackend,
 } from '../../src/backend';
@@ -43,7 +43,7 @@ describe('crypto-verify', () => {
   beforeEach(async () => {
     const backend: IBackend = {
       backend_api: new BasicBackendApi('terra'),
-      storage: new BasicKVIterStorage(),
+      storage: new BinaryKVIterStorage(),
       querier: new BasicQuerier(),
     };
 

@@ -4,7 +4,7 @@ import {
   BasicBackendApi,
   BasicQuerier,
   IBackend,
-  BasicKVIterStorage,
+  BinaryKVIterStorage,
 } from '../../src/backend';
 import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
 import { Environment } from '../../src';
@@ -34,7 +34,7 @@ describe('queue', () => {
   beforeEach(async () => {
     const backend: IBackend = {
       backend_api: new BasicBackendApi('terra'),
-      storage: new BasicKVIterStorage(),
+      storage: new BinaryKVIterStorage(),
       querier: new BasicQuerier(),
     };
     const env = new Environment(backend.backend_api, 100_000_000_000_000);
