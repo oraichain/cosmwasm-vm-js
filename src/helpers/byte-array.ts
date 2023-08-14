@@ -46,7 +46,6 @@ export function writeUInt32BE(bytes: Uint8Array, num: number, start: number) {
 
 export function decreaseBytes(bytes: Uint8Array) {
   const ret = new Uint8Array(bytes);
-  let i = ret.length - 1;
   for (let i = ret.length - 1; i >= 0; --i) {
     if (ret[i] === 0) {
       ret[i] = 255;
@@ -60,7 +59,6 @@ export function decreaseBytes(bytes: Uint8Array) {
 
 export function increaseBytes(bytes: Uint8Array) {
   const ret = new Uint8Array(bytes);
-  let i = ret.length - 1;
   for (let i = 0; i < ret.length; ++i) {
     if (ret[i] === 255) {
       ret[i] = 0;
