@@ -1,6 +1,6 @@
 {
   "name": "@oraichain/cosmwasm-vm-js",
-  "version": "0.2.67",
+  "version": "0.2.68",
   "license": "MIT",
   "author": "TerranOne, Oraichain Labs",
   "main": "dist/index.js",
@@ -45,7 +45,7 @@
     "@cosmjs/amino": "^0.31.0",
     "@cosmjs/crypto": "^0.31.0",
     "@cosmjs/encoding": "^0.31.0",
-    "@oraichain/immutable": "^4.3.5",
+    "@oraichain/immutable": "^4.3.6",
     "@oraichain/wasm-json-toolkit": "^1.0.24",
     "bech32": "1.1.4",
     "elliptic": "^6.5.4",
