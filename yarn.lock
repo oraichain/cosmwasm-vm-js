@@ -620,10 +620,10 @@
   resolved "https://registry.yarnpkg.com/@oraichain/cosmwasm-vm-zk-nodejs/-/cosmwasm-vm-zk-nodejs-0.0.7.tgz#d640c4a144c35157ac0e4292a02b92e357d90cf0"
   integrity sha512-ZbRFSWL81a/gDrPUsHzpwOttI0SdGNrYEDcmGGcl4cN0853XAzFkYt71PM2xckWZ0Mlh21erbTpZJNTFH78FYg==
 
-"@oraichain/immutable@^4.3.6":
-  version "4.3.6"
-  resolved "https://registry.yarnpkg.com/@oraichain/immutable/-/immutable-4.3.6.tgz#4f8f8627865cd2121255a1d34f49b25d54e11182"
-  integrity sha512-BE0Yb6UZqqDf6g8CRlLhuocWsElC05l0gLa23eXgF6KGnB5vLxGYrcwJcuLKLIE5YIllDtlHpRbOjc11mx387g==
+"@oraichain/immutable@^4.3.7":
+  version "4.3.7"
+  resolved "https://registry.yarnpkg.com/@oraichain/immutable/-/immutable-4.3.7.tgz#7398edec7aca62ad911dfab8446d3432ed5400ac"
+  integrity sha512-eqvz1IOL/I5RmVaM7OZdesOZWEFXX1ZWMq5MpGmLp/kFQHDyLoz1P9DgfkBVJ+qTyTnF6o3u+pXEiWFb5LMjiw==
 
 "@oraichain/wasm-json-toolkit@^1.0.24":
   version "1.0.24"
