@@ -44,6 +44,18 @@ export function writeUInt32BE(bytes: Uint8Array, num: number, start: number) {
   }
 }
 
+export function mergeUint8Array(...array: Uint8Array[]) {
+  let n = 0;
+  for (const item of array) n += item.length;
+  const bytes = new Uint8Array(n);
+  n = 0;
+  for (const item of array) {
+    bytes.set(item, n);
+    n += item.length;
+  }
+  return bytes;
+}
+
 export function decreaseBytes(bytes: Uint8Array) {
   const ret = new Uint8Array(bytes);
   for (let i = ret.length - 1; i >= 0; --i) {

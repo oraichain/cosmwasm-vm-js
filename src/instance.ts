@@ -8,7 +8,7 @@ import { metering } from '@oraichain/wasm-json-toolkit';
 import { Region } from './memory';
 import { GasInfo, IBackend, Record } from './backend';
 import { Env, MessageInfo } from './types';
-import { toByteArray, toNumber } from './helpers/byte-array';
+import { toByteArray, toNumber, mergeUint8Array } from './helpers/byte-array';
 import {
   getNewResponse,
   getOldEnv,
@@ -42,7 +42,7 @@ export class VMInstance {
   // override this
   public static eddsa = new eddsa('ed25519');
   private static wasmMeteringCache = new Map();
-
+  private static wasmCache = new Map();
   constructor(public backend: IBackend, public readonly env?: Environment) {}
 
   // checksum can be used to validate wasmByteCode
@@ -75,7 +75,9 @@ export class VMInstance {
       },
     };
     let mod: WebAssembly.Module;
-
+    if (checksum === undefined) {
+      checksum = toHex(sha256(wasmByteCode));
+    }
     if (this.env) {
       Object.assign(imports, {
         metering: {
@@ -91,20 +93,25 @@ export class VMInstance {
       });
 
       // check cached first
-      if (checksum === undefined) {
-        checksum = toHex(sha256(wasmByteCode));
-      }
       if (!VMInstance.wasmMeteringCache.has(checksum)) {
         VMInstance.wasmMeteringCache.set(
           checksum,
-          metering.meterWASM(wasmByteCode)
+          await WebAssembly.compile(metering.meterWASM(wasmByteCode))
         );
       }
-      const meteredWasm = VMInstance.wasmMeteringCache.get(checksum);
-      mod = await WebAssembly.compile(meteredWasm);
+      mod = VMInstance.wasmMeteringCache.get(checksum);
     } else {
-      mod = await WebAssembly.compile(wasmByteCode);
+      // check cached first
+      if (!VMInstance.wasmCache.has(checksum)) {
+        VMInstance.wasmCache.set(
+          checksum,
+          await WebAssembly.compile(wasmByteCode)
+        );
+      }
+      mod = VMInstance.wasmCache.get(checksum);
     }
+
+    // can serialize mod to file as compile wasm module
 
     // init wasm instance
     this.instance = await WebAssembly.instantiate(mod, imports);
@@ -428,24 +435,17 @@ export class VMInstance {
     }
 
     // old version following standard: [value,key,key.length]
+    const keyBytes = toByteArray(record.key.length, 4);
     if (this.version === 4) {
       return this.allocate_bytes(
-        new Uint8Array([
-          ...record.value,
-          ...record.key,
-          ...toByteArray(record.key.length, 4),
-        ])
+        mergeUint8Array(record.value, record.key, keyBytes)
       );
     }
 
     // separate by 4 bytes [key,key.length,value,value.length]
+    const valueBytes = toByteArray(record.value.length, 4);
     return this.allocate_bytes(
-      new Uint8Array([
-        ...record.key,
-        ...toByteArray(record.key.length, 4),
-        ...record.value,
-        ...toByteArray(record.value.length, 4),
-      ])
+      mergeUint8Array(record.key, keyBytes, record.value, valueBytes)
     );
   }
 
