@@ -31,8 +31,6 @@ export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;
 export const MAX_LENGTH_ED25519_MESSAGE: number = 128 * 1024;
 export const EDDSA_PUBKEY_LEN: number = 32;
 
-let db;
-
 export class VMInstance {
   // default version
   private _version: number = 8;
@@ -379,8 +377,6 @@ export class VMInstance {
     }
 
     this.backend.storage.set(key.data, value.data);
-
-    db = this.backend.storage;
   }
 
   do_db_remove(key: Region) {
