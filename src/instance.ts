@@ -1,4 +1,3 @@
-/*eslint-disable prefer-const */
 import bech32 from 'bech32';
 import { eddsa } from 'elliptic';
 import { toHex } from '@cosmjs/encoding';
@@ -39,8 +38,8 @@ export class VMInstance {
 
   // override this
   public static eddsa = new eddsa('ed25519');
-  private static wasmMeteringCache = new Map();
-  private static wasmCache = new Map();
+  private static wasmMeteringCache = new Map<string, WebAssembly.Module>();
+  private static wasmCache = new Map<string, WebAssembly.Module>();
   constructor(public backend: IBackend, public readonly env?: Environment) {}
 
   // checksum can be used to validate wasmByteCode
@@ -97,7 +96,7 @@ export class VMInstance {
           await WebAssembly.compile(metering.meterWASM(wasmByteCode))
         );
       }
-      mod = VMInstance.wasmMeteringCache.get(checksum);
+      mod = VMInstance.wasmMeteringCache.get(checksum)!;
     } else {
       // check cached first
       if (!VMInstance.wasmCache.has(checksum)) {
@@ -106,10 +105,8 @@ export class VMInstance {
           await WebAssembly.compile(wasmByteCode)
         );
       }
-      mod = VMInstance.wasmCache.get(checksum);
+      mod = VMInstance.wasmCache.get(checksum)!;
     }
-
-    // can serialize mod to file as compile wasm module
 
     // init wasm instance
     this.instance = await WebAssembly.instantiate(mod, imports);
