@@ -116,12 +116,12 @@ export class Region {
    * Reads the region's data as a Uint8Array.
    * @returns The byte-slice of the region's data.
    */
-  public read(): Uint8Array {
-    return new Uint8Array(this.memory.buffer, this.offset, this.length);
+  public read(): Buffer {
+    return Buffer.from(this.memory.buffer, this.offset, this.length);
   }
 
   public read_b64(): string {
-    return Buffer.from(this.read()).toString('base64');
+    return this.read().toString('base64');
   }
 
   /**
@@ -129,7 +129,7 @@ export class Region {
    * @returns The region's data as a string.
    */
   public read_str(): string {
-    return new TextDecoder().decode(this.read());
+    return this.read().toString();
   }
 
   /**
