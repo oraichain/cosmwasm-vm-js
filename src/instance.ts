@@ -111,14 +111,15 @@ export class VMInstance {
     // init wasm instance
     this.instance = await WebAssembly.instantiate(mod, imports);
 
-    for (const methodName in this.instance.exports) {
-      // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
-      if (methodName === 'cosmwasm_vm_version_4') {
-        this._version = 4;
-        break;
-      } else if (methodName.startsWith('interface_version_')) {
-        this._version = Number(methodName.substring(18));
-        break;
+    // support cosmwasm_vm_version_4 (v0.11.0 - v0.13.2)
+    if ('cosmwasm_vm_version_4' in this.instance.exports) {
+      this._version = 4;
+    } else {
+      for (const methodName in this.instance.exports) {
+        if (methodName.startsWith('interface_version_')) {
+          this._version = Number(methodName.substring(18));
+          break;
+        }
       }
     }
   }
@@ -130,7 +131,7 @@ export class VMInstance {
   public get exports(): any {
     if (!this.instance)
       throw new Error('Please init instance before using methods');
-    return this.instance!.exports;
+    return this.instance.exports;
   }
 
   public get gasUsed() {
@@ -564,10 +565,9 @@ export class VMInstance {
     if (message.length > MAX_LENGTH_ED25519_MESSAGE) return 1;
     if (signature.length > MAX_LENGTH_ED25519_SIGNATURE) return 1;
     if (pubkey.length > EDDSA_PUBKEY_LEN) return 1;
-
     const sig = Buffer.from(signature.data).toString('hex');
     const pub = Buffer.from(pubkey.data).toString('hex');
-    const msg = Buffer.from(message.data).toString('hex');
+    const msg = Buffer.from(message.data);
     const _signature = VMInstance.eddsa.makeSignature(sig);
     const _pubkey = VMInstance.eddsa.keyFromPublic(pub);
 
@@ -580,11 +580,7 @@ export class VMInstance {
       this.env.processGasInfo(gasInfo);
     }
 
-    if (isValidSignature) {
-      return 0;
-    } else {
-      return 1;
-    }
+    return isValidSignature === true ? 0 : 1;
   }
 
   // Verifies a batch of messages against a batch of signatures with a batch of public keys,
@@ -645,20 +641,15 @@ export class VMInstance {
     }
 
     for (let i = 0; i < messages.length; i++) {
-      const message = Buffer.from(messages[i]).toString('hex');
+      const message = Buffer.from(messages[i]);
       const signature = Buffer.from(signatures[i]).toString('hex');
       const publicKey = Buffer.from(publicKeys[i]).toString('hex');
 
       const _signature = VMInstance.eddsa.makeSignature(signature);
       const _publicKey = VMInstance.eddsa.keyFromPublic(publicKey);
 
-      try {
-        if (VMInstance.eddsa.verify(message, _signature, _publicKey) === false)
-          return 1;
-      } catch (e) {
-        console.log(e);
+      if (VMInstance.eddsa.verify(message, _signature, _publicKey) === false)
         return 1;
-      }
     }
 
     return 0;
@@ -787,11 +778,12 @@ export class VMInstance {
 
   public execute(env: Env, info: MessageInfo, msg: object): object {
     const execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
-    const envArg = this.version === 4 ? getOldEnv(env) : env;
-    const infoArg = this.version === 4 ? getOldInfo(info) : info;
-    const args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
+    const args =
+      this.version === 4
+        ? [getOldEnv(env), getOldInfo(info), msg]
+        : [env, info, msg];
     this.storageReadonly = false;
-    const result = execute(...args);
+    const result = execute(...args.map((x) => this.allocate_json(x).ptr));
     const { json } = this.region(result);
 
     if (this.version < 6) {
@@ -887,24 +879,15 @@ export class VMInstance {
   }
 }
 
-function decodeSections(
-  data: Uint8Array | number[]
-): (number[] | Uint8Array)[] {
-  const result: (number[] | Uint8Array)[] = [];
+function decodeSections(data: Uint8Array): Uint8Array[] {
+  const result = [];
   let remainingLen = data.length;
-
   while (remainingLen >= 4) {
-    const tailLen = toNumber([
-      data[remainingLen - 4],
-      data[remainingLen - 3],
-      data[remainingLen - 2],
-      data[remainingLen - 1],
-    ]);
-
-    const section = data.slice(remainingLen - 4 - tailLen, remainingLen - 4);
+    const tailLen = toNumber(data.subarray(remainingLen - 4, remainingLen));
+    remainingLen -= 4;
+    const section = data.subarray(remainingLen - tailLen, remainingLen);
     result.push(section);
-
-    remainingLen -= 4 + tailLen;
+    remainingLen -= tailLen;
   }
 
   result.reverse();
