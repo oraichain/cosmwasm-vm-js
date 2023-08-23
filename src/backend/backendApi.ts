@@ -42,10 +42,10 @@ export interface IBackendApi {
   sha256(input: Uint8Array): Uint8Array;
 }
 
-export class BasicBackendApi implements IBackendApi {
-  public CANONICAL_LENGTH = 54;
-  public EXCESS_PADDING = 6;
+export const CANONICAL_LENGTH = 64;
+export const EXCESS_PADDING = 6;
 
+export class BasicBackendApi implements IBackendApi {
   constructor(public bech32_prefix: string = 'terra') {}
 
   poseidon_hash(
@@ -84,7 +84,7 @@ export class BasicBackendApi implements IBackendApi {
       throw new Error(`canonical_address: Address too short: ${normalized}`);
     }
 
-    if (normalized.length > this.CANONICAL_LENGTH) {
+    if (normalized.length > CANONICAL_LENGTH) {
       throw new Error(`canonical_address: Address too long: ${normalized}`);
     }
 
@@ -97,10 +97,10 @@ export class BasicBackendApi implements IBackendApi {
     }
 
     // Remove excess padding, otherwise bech32.encode will throw "Exceeds length limit"
-    // error when normalized is greater than 48 in length.
+    // error when normalized is greater than 58 in length.
     const normalized =
-      canonical.length - this.EXCESS_PADDING >= 48
-        ? canonical.slice(0, this.CANONICAL_LENGTH - this.EXCESS_PADDING)
+      canonical.length >= CANONICAL_LENGTH
+        ? canonical.slice(0, CANONICAL_LENGTH - EXCESS_PADDING)
         : canonical;
     return bech32.encode(this.bech32_prefix, bech32.toWords(normalized));
   }
