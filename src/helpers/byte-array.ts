@@ -57,27 +57,23 @@ export function mergeUint8Array(...array: Uint8Array[]) {
 }
 
 export function decreaseBytes(bytes: Uint8Array) {
-  const ret = new Uint8Array(bytes);
-  for (let i = ret.length - 1; i >= 0; --i) {
-    if (ret[i] === 0) {
-      ret[i] = 255;
+  for (let i = bytes.length - 1; i >= 0; --i) {
+    if (bytes[i] === 0) {
+      bytes[i] = 255;
     } else {
-      ret[i]--;
+      bytes[i]--;
       break;
     }
   }
-  return ret;
 }
 
 export function increaseBytes(bytes: Uint8Array) {
-  const ret = new Uint8Array(bytes);
-  for (let i = 0; i < ret.length; ++i) {
-    if (ret[i] === 255) {
-      ret[i] = 0;
+  for (let i = bytes.length - 1; i >= 0; --i) {
+    if (bytes[i] === 255) {
+      bytes[i] = 0;
     } else {
-      ret[i]++;
+      bytes[i]++;
       break;
     }
   }
-  return ret;
 }
