@@ -34,7 +34,7 @@ export class VMInstance {
   // default version
   private _version: number = 8;
   public instance?: WebAssembly.Instance;
-  public debugMsgs: string[] = [];
+  public debugMsgs: any[] = [];
 
   // override this
   public static eddsa = new eddsa('ed25519');
@@ -742,7 +742,12 @@ export class VMInstance {
   }
 
   do_debug(message: Region) {
-    this.debugMsgs.push(message.read_str());
+    const msgStr = message.read_str();
+    try {
+      this.debugMsgs.push(JSON.parse(msgStr));
+    } catch {
+      this.debugMsgs.push(msgStr);
+    }
   }
 
   do_query_chain(request: Region): Region {
