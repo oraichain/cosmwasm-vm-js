@@ -742,12 +742,7 @@ export class VMInstance {
   }
 
   do_debug(message: Region) {
-    const msgStr = message.read_str();
-    try {
-      this.debugMsgs.push(JSON.parse(msgStr));
-    } catch {
-      this.debugMsgs.push(msgStr);
-    }
+    this.debugMsgs.push(message.read_str());
   }
 
   do_query_chain(request: Region): Region {
