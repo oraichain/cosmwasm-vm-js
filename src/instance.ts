@@ -34,7 +34,7 @@ export class VMInstance {
   // default version
   private _version: number = 8;
   public instance?: WebAssembly.Instance;
-  public debugMsgs: any[] = [];
+  public debugMsgs: string[] = [];
 
   // override this
   public static eddsa = new eddsa('ed25519');
