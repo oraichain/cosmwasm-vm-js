@@ -6,8 +6,8 @@ import {
   BasicQuerier,
   IBackend,
 } from '../../src/backend';
-import * as testData from '../common/test-data';
-import { parseBase64Response, wrapResult } from '../common/test-vm';
+import * as testData from '../common/data';
+import { parseBase64Response, wrapResult } from '../common/vm';
 import { fromHex, toHex } from '@cosmjs/encoding';
 
 const wasmBytecode = readFileSync('testdata/v1.1/crypto_verify.wasm');

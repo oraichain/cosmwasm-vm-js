@@ -7,12 +7,18 @@ export type Binary = string;
 export type Env =
   | {
       block: BlockInfo;
-      contract: ContractInfo;
+      contract: {
+        address: Address;
+      };
     }
   | {
       block: BlockInfo;
-      transaction: TransactionInfo | null;
-      contract: ContractInfo;
+      transaction: {
+        index: number | string;
+      } | null;
+      contract: {
+        address: Address;
+      };
     };
 
 export interface Attribute {
@@ -43,14 +49,6 @@ export interface BlockInfo {
   height: number | string;
   time: number | string;
   chain_id: string;
-}
-
-export interface TransactionInfo {
-  index: number | string;
-}
-
-export interface ContractInfo {
-  address: Address;
 }
 
 /** Port of [MessageInfo (Rust)](https://docs.rs/cosmwasm-std/1.1.4/cosmwasm_std/struct.MessageInfo.html) */

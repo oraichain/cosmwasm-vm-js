@@ -6,7 +6,7 @@ import {
   BasicQuerier,
 } from '../../src/backend';
 import { fromBase64 } from '@cosmjs/encoding';
-import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
+import { expectResponseToBeOk, parseBase64Response } from '../common/vm';
 
 type HackatomQueryRequest = {
   bank: {

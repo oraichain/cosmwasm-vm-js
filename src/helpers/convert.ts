@@ -3,7 +3,6 @@ import {
   Env,
   MessageInfo,
   SubMsg,
-  ContractInfo,
   Attribute,
   Binary,
   Address,
@@ -15,7 +14,9 @@ import {
 
 export interface OlEnv {
   block: OlBlockInfo;
-  contract: ContractInfo;
+  contract: {
+    address: Address;
+  };
 }
 
 export type OldWasmMsg =

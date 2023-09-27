@@ -1,5 +1,6 @@
 import { fromBech32, normalizeBech32 } from '@cosmjs/encoding';
 import bech32 from 'bech32';
+import { MAX_LENGTH_HUMAN_ADDRESS } from '../instance';
 
 export interface IGasInfo {
   cost: number;
@@ -97,11 +98,16 @@ export class BasicBackendApi implements IBackendApi {
     }
 
     // Remove excess padding, otherwise bech32.encode will throw "Exceeds length limit"
-    // error when normalized is greater than 58 in length.
+    // error when normalized is greater than MAX_LENGTH_HUMAN_ADDRESS in length.
     const normalized =
       canonical.length >= CANONICAL_LENGTH
         ? canonical.slice(0, CANONICAL_LENGTH - EXCESS_PADDING)
         : canonical;
-    return bech32.encode(this.bech32_prefix, bech32.toWords(normalized));
+
+    return bech32.encode(
+      this.bech32_prefix,
+      bech32.toWords(normalized),
+      MAX_LENGTH_HUMAN_ADDRESS
+    );
   }
 }

@@ -36,7 +36,6 @@ describe('CosmWasmVM', () => {
     await vm.build(wasmBytecode);
 
     const json = vm.instantiate(mockEnv, mockInfo, { count: 20 });
-    console.log(json);
     const actual = {
       ok: {
         attributes: [

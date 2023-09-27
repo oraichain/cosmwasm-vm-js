@@ -9,7 +9,7 @@ import {
   BasicQuerier,
   Order,
 } from '../src/backend';
-import { parseBase64Response } from './common/test-vm';
+import { parseBase64Response } from './common/vm';
 
 const mockEnv: Env = {
   block: {

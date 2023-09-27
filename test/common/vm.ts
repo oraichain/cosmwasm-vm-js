@@ -8,7 +8,7 @@ import {
   BasicQuerier,
   Region,
 } from '../../src';
-import { KEY1, VALUE1, KEY2, VALUE2 } from './test-data';
+import { KEY1, VALUE1, KEY2, VALUE2 } from './data';
 
 export function wrapResult(res: any) {
   if (res instanceof Region) res = res.json;

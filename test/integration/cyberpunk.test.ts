@@ -7,7 +7,7 @@ import {
   IBackend,
 } from '../../src/backend';
 import type { Env, MessageInfo } from '../../src/types';
-import { parseBase64Response, wrapResult } from '../common/test-vm';
+import { parseBase64Response, wrapResult } from '../common/vm';
 import { Environment } from '../../src';
 
 const wasmBytecode = readFileSync('testdata/v1.1/cyberpunk.wasm');

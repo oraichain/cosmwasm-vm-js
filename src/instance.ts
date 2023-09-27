@@ -23,7 +23,7 @@ export const GAS_COST_RANGE = 11;
 
 export const MAX_LENGTH_DB_KEY: number = 64 * 1024;
 export const MAX_LENGTH_DB_VALUE: number = 128 * 1024;
-export const MAX_LENGTH_CANONICAL_ADDRESS: number = 64;
+export const MAX_LENGTH_CANONICAL_ADDRESS: number = 90;
 export const MAX_LENGTH_HUMAN_ADDRESS: number = 256;
 
 export const MAX_LENGTH_ED25519_SIGNATURE: number = 64;

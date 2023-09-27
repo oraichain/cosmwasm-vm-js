@@ -1,6 +1,6 @@
 import { toAscii } from '@cosmjs/encoding';
-import { createVM, writeData } from './common/test-vm';
-import * as testData from './common/test-data';
+import { createVM, writeData } from './common/vm';
+import * as testData from './common/data';
 import {
   VMInstance,
   MAX_LENGTH_CANONICAL_ADDRESS,
@@ -16,7 +16,7 @@ describe('do_db_read', () => {
     vm = await createVM();
   });
 
-  it('works', async () => {
+  it('works-abcd', async () => {
     const keyPtr = writeData(vm, testData.KEY1);
     const result = vm.do_db_read(keyPtr);
 
@@ -365,7 +365,7 @@ describe('do_addr_humanize', () => {
       const canonicalAddrRegion = writeData(vm, new Uint8Array(54).fill(0x22));
       vm.do_addr_humanize(canonicalAddrRegion, vm.allocate(0));
     } catch (e) {
-      expect(e).toEqual(new RangeError('offset is out of bounds'));
+      expect(e).toEqual(new RangeError('Exceeds length limit'));
     }
   });
 });

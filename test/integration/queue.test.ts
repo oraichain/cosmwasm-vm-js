@@ -6,7 +6,7 @@ import {
   IBackend,
   BinaryKVIterStorage,
 } from '../../src/backend';
-import { expectResponseToBeOk, parseBase64Response } from '../common/test-vm';
+import { expectResponseToBeOk, parseBase64Response } from '../common/vm';
 import { Environment } from '../../src';
 
 const wasmBytecode = readFileSync('testdata/v1.1/queue.wasm');
