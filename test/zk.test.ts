@@ -16,7 +16,7 @@ import {
   groth16_verify,
   keccak_256,
   sha256,
-} from '@oraichain/cosmwasm-vm-zk-nodejs';
+} from '@oraichain/cosmwasm-vm-zk';
 
 const poseidon = new Poseidon();
 

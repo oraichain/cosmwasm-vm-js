@@ -725,10 +725,10 @@
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.1.4.tgz#2611ebf5764c1bf754da7c7794de4fb30512336d"
   integrity sha512-+PYsVPrTSqtVjatKt2A/Proukn2Yrz61OBThOCKErc5w2/r1Fh37vbDv0Eah7pyNltrmacjwTvdw3JoR+WE4TA==
 
-"@oraichain/cosmwasm-vm-zk-nodejs@^0.0.7":
-  version "0.0.7"
-  resolved "https://registry.yarnpkg.com/@oraichain/cosmwasm-vm-zk-nodejs/-/cosmwasm-vm-zk-nodejs-0.0.7.tgz#d640c4a144c35157ac0e4292a02b92e357d90cf0"
-  integrity sha512-ZbRFSWL81a/gDrPUsHzpwOttI0SdGNrYEDcmGGcl4cN0853XAzFkYt71PM2xckWZ0Mlh21erbTpZJNTFH78FYg==
+"@oraichain/cosmwasm-vm-zk@^0.1.3":
+  version "0.1.3"
+  resolved "https://registry.yarnpkg.com/@oraichain/cosmwasm-vm-zk/-/cosmwasm-vm-zk-0.1.3.tgz#84c3169291e7dc95035c6456d66642a119b0d18e"
+  integrity sha512-w1JHv6OrGkdnzNnB4Fk70KnXsWUc6Dn9cJhmNGRZJzYMOdf9Jlavl+OkRkYTYC+0sEFp9cKvvFA3i2zllMTUxA==
 
 "@oraichain/immutable@^4.3.9":
   version "4.3.9"
