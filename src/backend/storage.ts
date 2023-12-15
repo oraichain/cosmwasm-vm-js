@@ -196,7 +196,7 @@ export class BinaryKVStorage implements IStorage {
   }
 
   remove(key: Uint8Array): void {
-    this.dict = this.dict.delete(key);
+    this.dict = this.dict.delete(new Uint8Array(key));
   }
 }
 
