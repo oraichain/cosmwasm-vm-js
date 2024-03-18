@@ -7,6 +7,7 @@ import {
   MAX_LENGTH_HUMAN_ADDRESS,
   Order,
   Region,
+  GenericError,
 } from '../src';
 import { toByteArray, toNumber } from '../src/helpers/byte-array';
 
@@ -198,12 +199,7 @@ describe('do_addr_validate', () => {
       const result = vm.do_addr_validate(addrPtr);
       expect(result).toEqual(0);
     } catch (e) {
-      expect(e).toEqual(
-        new Error(
-          'Address too large: ' +
-            'terra14z56l0fp2lsf86zy3hty2z47ezkhnthtr9yq76'.repeat(1024)
-        )
-      );
+      expect(e).toEqual(new GenericError('input too long for addr_validate'));
     }
   });
 });

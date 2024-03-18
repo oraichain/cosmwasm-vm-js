@@ -6,7 +6,7 @@ import { ecdsaRecover, ecdsaVerify } from 'secp256k1';
 import { metering } from '@oraichain/wasm-json-toolkit';
 import { Region } from './memory';
 import { GasInfo, IBackend, Record } from './backend';
-import { Env, MessageInfo } from './types';
+import { Env, GenericError, MessageInfo } from './types';
 import { toByteArray, toNumber, mergeUint8Array } from './helpers/byte-array';
 import {
   getNewResponse,
@@ -210,21 +210,36 @@ export class VMInstance {
     return this.do_db_next(iterator_id).ptr;
   }
 
+  // return Result, so error need to write to contract
   addr_canonicalize(source_ptr: number, destination_ptr: number): number {
     const source = this.region(source_ptr);
     const destination = this.region(destination_ptr);
-    return this.do_addr_canonicalize(source, destination).ptr;
+    try {
+      return this.do_addr_canonicalize(source, destination).ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
+  // return Result, so error need to write to contract
   addr_humanize(source_ptr: number, destination_ptr: number): number {
     const source = this.region(source_ptr);
     const destination = this.region(destination_ptr);
-    return this.do_addr_humanize(source, destination).ptr;
+    try {
+      return this.do_addr_humanize(source, destination).ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
+  // return Result, so error need to write to contract
   addr_validate(source_ptr: number): number {
     const source = this.region(source_ptr);
-    return this.do_addr_validate(source).ptr;
+    try {
+      return this.do_addr_validate(source).ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   secp256k1_verify(
@@ -485,7 +500,7 @@ export class VMInstance {
     }
 
     if (source.str.length > MAX_LENGTH_HUMAN_ADDRESS) {
-      throw new Error(`Address too large: ${source.str}`);
+      throw new GenericError('input too long for addr_validate');
     }
 
     const canonical = bech32.fromWords(bech32.decode(source.str).words);
@@ -586,6 +601,7 @@ export class VMInstance {
   // Verifies a batch of messages against a batch of signatures with a batch of public keys,
   // using the ed25519 EdDSA scheme.
   // Returns 0 on verification success (all batches verify correctly), 1 on verification failure
+  // Throw Error is corresponding to panic
   do_ed25519_batch_verify(
     messages_ptr: Region,
     signatures_ptr: Region,

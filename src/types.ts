@@ -229,3 +229,10 @@ export interface ContractResponse {
   attributes: Attribute[];
   data: Binary | null;
 }
+
+// general error like javascript error
+export class GenericError extends Error {
+  constructor(msg: string) {
+    super(`Generic error: ${msg}`);
+  }
+}
