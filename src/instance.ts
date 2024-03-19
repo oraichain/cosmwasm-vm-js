@@ -183,6 +183,7 @@ export class VMInstance {
     return this._version;
   }
 
+  /// storage export will panic if error occurs
   db_read(key_ptr: number): number {
     const key = this.region(key_ptr);
     return this.do_db_read(key).ptr;
@@ -209,8 +210,9 @@ export class VMInstance {
     const iterator_id = this.region(iterator_id_ptr);
     return this.do_db_next(iterator_id).ptr;
   }
+  /// end storage export
 
-  // return Result, so error need to write to contract
+  /// api exports return Result, so error need to write to contract
   addr_canonicalize(source_ptr: number, destination_ptr: number): number {
     const source = this.region(source_ptr);
     const destination = this.region(destination_ptr);
@@ -221,7 +223,6 @@ export class VMInstance {
     }
   }
 
-  // return Result, so error need to write to contract
   addr_humanize(source_ptr: number, destination_ptr: number): number {
     const source = this.region(source_ptr);
     const destination = this.region(destination_ptr);
@@ -232,7 +233,6 @@ export class VMInstance {
     }
   }
 
-  // return Result, so error need to write to contract
   addr_validate(source_ptr: number): number {
     const source = this.region(source_ptr);
     try {
@@ -250,7 +250,11 @@ export class VMInstance {
     const hash = this.region(hash_ptr);
     const signature = this.region(signature_ptr);
     const pubkey = this.region(pubkey_ptr);
-    return this.do_secp256k1_verify(hash, signature, pubkey);
+    try {
+      return this.do_secp256k1_verify(hash, signature, pubkey);
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   secp256k1_recover_pubkey(
@@ -260,9 +264,14 @@ export class VMInstance {
   ): bigint {
     const hash = this.region(hash_ptr);
     const signature = this.region(signature_ptr);
-    return BigInt(
-      this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr
-    );
+
+    try {
+      return BigInt(
+        this.do_secp256k1_recover_pubkey(hash, signature, recover_param).ptr
+      );
+    } catch (ex) {
+      return BigInt(this.allocate_str((ex as Error).message).ptr);
+    }
   }
 
   ed25519_verify(
@@ -273,7 +282,11 @@ export class VMInstance {
     const message = this.region(message_ptr);
     const signature = this.region(signature_ptr);
     const pubkey = this.region(pubkey_ptr);
-    return this.do_ed25519_verify(message, signature, pubkey);
+    try {
+      return this.do_ed25519_verify(message, signature, pubkey);
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   ed25519_batch_verify(
@@ -284,7 +297,11 @@ export class VMInstance {
     const messages = this.region(messages_ptr);
     const signatures = this.region(signatures_ptr);
     const public_keys = this.region(public_keys_ptr);
-    return this.do_ed25519_batch_verify(messages, signatures, public_keys);
+    try {
+      return this.do_ed25519_batch_verify(messages, signatures, public_keys);
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   curve_hash(
@@ -294,7 +311,11 @@ export class VMInstance {
   ): number {
     const input = this.region(input_ptr);
     const destination = this.region(destination_ptr);
-    return this.do_curve_hash(input, curve, destination).ptr;
+    try {
+      return this.do_curve_hash(input, curve, destination).ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   poseidon_hash(
@@ -306,8 +327,12 @@ export class VMInstance {
     const left_input = this.region(left_input_ptr);
     const right_input = this.region(right_input_ptr);
     const destination = this.region(destination_ptr);
-    return this.do_poseidon_hash(left_input, right_input, curve, destination)
-      .ptr;
+    try {
+      return this.do_poseidon_hash(left_input, right_input, curve, destination)
+        .ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   groth16_verify(
@@ -319,20 +344,33 @@ export class VMInstance {
     const input = this.region(input_ptr);
     const proof = this.region(public_ptr);
     const vk = this.region(vk_ptr);
-    return this.do_groth16_verify(input, proof, vk, curve);
+    try {
+      return this.do_groth16_verify(input, proof, vk, curve);
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   keccak_256(input_ptr: number, destination_ptr: number): number {
     const input = this.region(input_ptr);
     const destination = this.region(destination_ptr);
-    return this.do_keccak_256(input, destination).ptr;
+    try {
+      return this.do_keccak_256(input, destination).ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
 
   sha256(input_ptr: number, destination_ptr: number): number {
     const input = this.region(input_ptr);
     const destination = this.region(destination_ptr);
-    return this.do_sha256(input, destination).ptr;
+    try {
+      return this.do_sha256(input, destination).ptr;
+    } catch (ex) {
+      return this.allocate_str((ex as Error).message).ptr;
+    }
   }
+  /// end api exports
 
   debug(message_ptr: number) {
     const message = this.region(message_ptr);
