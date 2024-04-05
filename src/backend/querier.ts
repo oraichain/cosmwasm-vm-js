@@ -15,8 +15,13 @@ export abstract class QuerierBase implements IQuerier {
     const contractResult =
       result instanceof Error
         ? { err: result.message }
-        : // result may already in base64 format
-          { ok: typeof result === 'string' ? result : objectToBase64(result) };
+        : // result may already in base64 format that starts with {"
+          {
+            ok:
+              typeof result === 'string' && result.startsWith('eyJ')
+                ? result
+                : objectToBase64(result),
+          };
 
     return objectToUint8Array({ ok: contractResult });
   }
