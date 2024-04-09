@@ -97,6 +97,7 @@ export interface Migrate {
 export type WasmMsg =
   | { execute: Execute }
   | { instantiate: Instantiate }
+  | { instantiate2: Instantiate2 }
   | { migrate: Migrate };
 
 /// IBC types
