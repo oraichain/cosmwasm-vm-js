@@ -84,6 +84,10 @@ export interface Instantiate {
   label: string;
 }
 
+export interface Instantiate2 extends Instantiate {
+  salt: Binary;
+}
+
 export interface Migrate {
   contract_addr: Address;
   new_code_id: number;
