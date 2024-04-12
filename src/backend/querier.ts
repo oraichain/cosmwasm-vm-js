@@ -18,8 +18,8 @@ export abstract class QuerierBase implements IQuerier {
         : // result may already in base64 format that starts with {"
           {
             ok:
-              // if not float number Decimal, then return raw, otherwise need to encode float to Binary
-              typeof result === 'string' && !result.includes('.')
+              // if result is not primative type (number like) then just return
+              typeof result === 'string' && Number.isNaN(parseFloat(result))
                 ? result
                 : objectToBase64(result),
           };
