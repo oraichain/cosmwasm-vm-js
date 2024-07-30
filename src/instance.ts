@@ -875,6 +875,14 @@ export class VMInstance {
     return json;
   }
 
+  public sudo(env: Env, msg: object): object {
+    const { sudo } = this.exports;
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
+    this.storageReadonly = false;
+    const result = sudo(...args);
+    return this.region(result).json;
+  }
+
   public reply(env: Env, msg: object): object {
     const { reply } = this.exports;
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);

@@ -122,7 +122,30 @@ describe('hackatom', () => {
     expectVerifierToBe(newVerifier);
   });
 
-  it.skip('sudo_can_steal_tokens', async () => {}); // sudo not implemented
+  it('sudo_can_steal_tokens', async () => {
+    const instantiateResponse = vm.instantiate(mockEnv, mockInfo, {
+      verifier,
+      beneficiary,
+    });
+
+    // sudo takes any tax it wants
+    const recipient = 'community-pool';
+    const amount = [{ amount: '700', denom: 'gold' }];
+    const sysMsg = {
+      steal_funds: {
+        recipient,
+        amount,
+      },
+    };
+    const sudoResponse = vm.sudo(mockEnv, sysMsg);
+    // Assert
+    expectResponseToBeOk(sudoResponse);
+
+    expect((sudoResponse as any).ok.messages.length).toBe(1);
+    expect((sudoResponse as any).ok.messages[0].msg).toEqual({
+      bank: { send: { to_address: recipient, amount } },
+    });
+  });
 
   it('querier_callbacks_work', async () => {
     // Arrange
