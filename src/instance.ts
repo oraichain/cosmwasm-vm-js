@@ -8,12 +8,6 @@ import { Region } from './memory';
 import { GasInfo, IBackend, Record } from './backend';
 import { Env, GenericError, MessageInfo } from './types';
 import { toByteArray, toNumber, mergeUint8Array } from './helpers/byte-array';
-import {
-  getNewResponse,
-  getOldEnv,
-  getOldInfo,
-  OldMessageInfo,
-} from './helpers/convert';
 import { Environment, GAS_PER_OP } from './environment';
 
 export const GAS_COST_HUMANIZE = 44;
@@ -155,6 +149,13 @@ export class VMInstance {
   public deallocate(region: Region): void {
     const { deallocate } = this.exports;
     deallocate(region.ptr);
+  }
+
+  public json(ptr: number): object {
+    const region = this.region(ptr);
+    const data = region.json;
+    this.deallocate(region);
+    return data;
   }
 
   public allocate_bytes(bytes: Uint8Array): Region {
@@ -818,61 +819,34 @@ export class VMInstance {
   public instantiate(env: Env, info: MessageInfo, msg: object): object {
     const instantiate =
       this.exports[this.version === 4 ? 'init' : 'instantiate'];
-    const envArg = this.version === 4 ? getOldEnv(env) : env;
-    const infoArg = this.version === 4 ? getOldInfo(info) : info;
-    const args = [envArg, infoArg, msg].map((x) => this.allocate_json(x).ptr);
+    const args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = instantiate(...args);
-    const { json } = this.region(result);
-    if (this.version < 6) {
-      return getNewResponse(json);
-    }
-    return json;
+    return this.json(result);
   }
 
   public execute(env: Env, info: MessageInfo, msg: object): object {
     const execute = this.exports[this.version === 4 ? 'handle' : 'execute'];
-    const args =
-      this.version === 4
-        ? [getOldEnv(env), getOldInfo(info), msg]
-        : [env, info, msg];
+    const args = [env, info, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
-    const result = execute(...args.map((x) => this.allocate_json(x).ptr));
-    const { json } = this.region(result);
-
-    if (this.version < 6) {
-      return getNewResponse(json);
-    }
-    return json;
+    const result = execute(...args);
+    return this.json(result);
   }
 
   public query(env: Env, msg: object): object {
     const { query } = this.exports;
-    const envArg = this.version === 4 ? getOldEnv(env) : env;
-    const args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = true;
     const result = query(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public migrate(env: Env, msg: object): object {
     const { migrate } = this.exports;
-    const envArg = this.version === 4 ? getOldEnv(env) : env;
-    const args = [envArg, msg].map((x) => this.allocate_json(x).ptr);
-    if (this.version === 4) {
-      const infoArg: OldMessageInfo = {
-        sender: '',
-        sent_funds: [],
-      };
-      args.splice(1, 0, this.allocate_json(infoArg).ptr);
-    }
+    const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = migrate(...args);
-    const { json } = this.region(result);
-    if (this.version < 6) {
-      return getNewResponse(json);
-    }
-    return json;
+    return this.json(result);
   }
 
   public sudo(env: Env, msg: object): object {
@@ -880,7 +854,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = sudo(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public reply(env: Env, msg: object): object {
@@ -888,7 +862,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = reply(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   // IBC implementation
@@ -897,7 +871,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = ibc_channel_open(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public ibc_channel_connect(env: Env, msg: object): object {
@@ -905,7 +879,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = ibc_channel_connect(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public ibc_channel_close(env: Env, msg: object): object {
@@ -913,7 +887,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = ibc_channel_close(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public ibc_packet_receive(env: Env, msg: object): object {
@@ -921,7 +895,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = ibc_packet_receive(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public ibc_packet_ack(env: Env, msg: object): object {
@@ -929,7 +903,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = ibc_packet_ack(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 
   public ibc_packet_timeout(env: Env, msg: object): object {
@@ -937,7 +911,7 @@ export class VMInstance {
     const args = [env, msg].map((x) => this.allocate_json(x).ptr);
     this.storageReadonly = false;
     const result = ibc_packet_timeout(...args);
-    return this.region(result).json;
+    return this.json(result);
   }
 }
 
